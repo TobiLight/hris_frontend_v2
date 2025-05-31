@@ -12,7 +12,7 @@ export interface User {
   first_name: string;
   last_name: string;
   image_uri: string | null
-  role: string;
+  role: {id: string, name: string};
   // Add other user properties as needed
 }
 

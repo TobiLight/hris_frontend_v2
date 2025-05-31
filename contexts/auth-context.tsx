@@ -71,10 +71,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(response.user);
       setIsAuthenticated(true);
 
+      console.log("user role", response.user.role.name);
+
       // Redirect based on user role
-      const redirectPath = response.user.role === "super_admin" || response.user.role === "hr" || response.user.role === "manager"
-        ? "/admin/dashboard"
-        : "/employee/dashboard";
+      const redirectPath =
+        response.user.role.name === "super_admin" ||
+        response.user.role.name === "hr" ||
+        response.user.role.name === "manager"
+          ? "/admin/dashboard"
+          : "/employee/dashboard";
+
       router.push(redirectPath);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");

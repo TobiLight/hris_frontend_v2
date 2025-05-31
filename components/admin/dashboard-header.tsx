@@ -111,7 +111,7 @@ export function AdminDashboardHeader() {
             />
           ) : (
             <AvatarFallback className="bg-teal-100 text-teal-800 text-lg">
-              {getInitials(user ? `${user.first_name}${user.last_name}`.toUpperCase() : 'WA')}
+              {getInitials(user ? `${user.first_name} ${user.last_name}`.toUpperCase() : 'SA', 2)}
             </AvatarFallback>
           )}
         </Avatar>

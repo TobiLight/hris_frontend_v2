@@ -28,8 +28,8 @@ export default function AdminLayout({
               <main>{children}</main>
             </div>
           </div>
-          <Toaster />
         </SidebarProvider>
+        <Toaster />
       </ThemeProvider>
     </>
     // </body>

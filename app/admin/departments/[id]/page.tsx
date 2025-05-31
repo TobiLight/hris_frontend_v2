@@ -4,7 +4,11 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, Edit, Users } from "lucide-react"
 import Link from "next/link"
 
-export default function DepartmentDetailsPage({ params }: { params: { id: string } }) {
+interface PageProps {
+  params: { id: string }
+}
+
+export default function DepartmentDetailsPage({ params }: PageProps) {
   return (
     <div className="flex flex-col">
       <AdminDashboardHeader />

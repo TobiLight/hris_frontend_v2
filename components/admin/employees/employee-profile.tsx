@@ -1,12 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Progress } from "@/components/ui/progress"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,48 +25,116 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Mail, Phone, MapPin, Award, Edit, MoreHorizontal, UserX, Send, Download, Printer, FileUp } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Edit,
+  MoreHorizontal,
+  UserX,
+  Send,
+  Download,
+  Printer,
+  FileUp,
+  Calendar,
+  Clock,
+  User,
+} from "lucide-react"
+import { toast, useToast } from "@/components/ui/use-toast"
+import { fetchEmployeeById } from "@/lib/api/employee-service"
+import { formatDate, getInitials } from "@/lib/utils"
+import { Skeleton } from "@/components/ui/skeleton"
+import Link from "next/link"
 
-interface EmployeeProfileProps {
-  employee: any // In a real app, we would define a proper type
+interface EmployeeProfileViewProps {
+  employeeId: string
 }
 
-export function EmployeeProfile({ employee }: EmployeeProfileProps) {
-  const { toast } = useToast()
+export function EmployeeProfileView({ employeeId }: {  employeeId: string
+}) {
   const [activeTab, setActiveTab] = useState("overview")
+  const [employee, setEmployee] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "bg-green-100 text-green-800 hover:bg-green-100"
-      case "Inactive":
-        return "bg-gray-100 text-gray-800 hover:bg-gray-100"
-      case "Onboarding":
-        return "bg-blue-100 text-blue-800 hover:bg-blue-100"
-      case "On Leave":
-        return "bg-amber-100 text-amber-800 hover:bg-amber-100"
-      default:
-        return "bg-gray-100 text-gray-800 hover:bg-gray-100"
+  useEffect(() => {
+    async function loadEmployeeData() {
+      try {
+        setLoading(true)
+        const data = await fetchEmployeeById(employeeId)
+        console.log("Employee data:", data)
+        setEmployee(data)
+        setError(null)
+      } catch (err) {
+        console.error("Error fetching employee:", err)
+        setError("Failed to load employee data. Please try again later.")
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load employee data. Please try again later.",
+        })
+      } finally {
+        setLoading(false)
+      }
     }
+
+    loadEmployeeData()
+  }, [employeeId, toast])
+
+  const getStatusColor = (status: boolean) => {
+    return status ? "bg-green-100 text-green-800 hover:bg-green-100" : "bg-gray-100 text-gray-800 hover:bg-gray-100"
   }
 
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+  const getInitialsFromName = (firstName: string, lastName: string) => {
+    return getInitials(`${firstName} ${lastName}`)
   }
 
   const handleDeactivateEmployee = () => {
     toast({
       title: "Employee Deactivated",
-      description: `${employee.personalInfo.firstName} ${employee.personalInfo.lastName} has been deactivated.`,
+      description: `${employee?.first_name} ${employee?.last_name} has been deactivated.`,
     })
   }
 
   const handleSendEmail = () => {
     toast({
       title: "Email Sent",
-      description: `An email has been sent to ${employee.personalInfo.email}.`,
+      description: `An email has been sent to ${employee?.email}.`,
     })
+  }
+
+  if (loading) {
+    return <EmployeeProfileSkeleton />
+  }
+
+  if (error) {
+    return (
+      <Card className="border-none shadow-md">
+        <CardContent className="pt-6">
+          <div className="text-center p-6">
+            <h2 className="text-xl font-semibold text-red-600 mb-2">Error Loading Employee</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>Try Again</Button>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!employee) {
+    return (
+      <Card className="border-none shadow-md">
+        <CardContent className="pt-6">
+          <div className="text-center p-6">
+            <h2 className="text-xl font-semibold mb-2">Employee Not Found</h2>
+            <p className="text-gray-600 mb-4">The requested employee could not be found.</p>
+            <Button asChild>
+              <Link href="/admin/employees">Back to Employees List</Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -80,33 +147,34 @@ export function EmployeeProfile({ employee }: EmployeeProfileProps) {
             <div className="flex flex-col sm:flex-row sm:items-center">
               <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white shadow-xl">
                 <AvatarImage
-                  src={employee.personalInfo.avatar}
-                  alt={`${employee.personalInfo.firstName} ${employee.personalInfo.lastName}`}
+                  src={employee.image_uri || "/placeholder.svg?height=128&width=128"}
+                  alt={`${employee.first_name} ${employee.last_name}`}
                 />
                 <AvatarFallback className="bg-teal-600 text-white text-2xl">
-                  {getInitials(employee.personalInfo.firstName, employee.personalInfo.lastName)}
+                  {getInitialsFromName(employee.first_name, employee.last_name)}
                 </AvatarFallback>
               </Avatar>
               <div className="mt-4 sm:mt-0 sm:ml-6">
                 <div className="flex items-center">
                   <h2 className="text-2xl font-bold">
-                    {employee.personalInfo.firstName} {employee.personalInfo.lastName}
+                    {employee.first_name} {employee.middle_name ? employee.middle_name + " " : ""}
+                    {employee.last_name}
                   </h2>
-                  <Badge variant="outline" className={`ml-3 ${getStatusColor(employee.employmentInfo.status)}`}>
-                    {employee.employmentInfo.status}
+                  <Badge variant="outline" className={`ml-3 ${getStatusColor(employee.is_active)}`}>
+                    {employee.is_active ? "Active" : "Inactive"}
                   </Badge>
                 </div>
-                <p className="text-gray-500">{employee.employmentInfo.position}</p>
-                <p className="text-sm text-gray-500">Employee ID: {employee.employmentInfo.employeeId}</p>
+                <p className="text-gray-500">{employee.job_title}</p>
+                <p className="text-sm text-gray-500">Employee ID: {employee.staff_id || "N/A"}</p>
               </div>
             </div>
 
             <div className="mt-4 sm:mt-0 flex gap-2">
               <Button variant="outline" size="sm" className="h-9" asChild>
-                <a href={`/admin/employees/${employee.id}/edit`}>
+                <Link href={`/admin/employees/${employee.id}/edit`}>
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
-                </a>
+                </Link>
               </Button>
 
               <DropdownMenu>
@@ -169,21 +237,23 @@ export function EmployeeProfile({ employee }: EmployeeProfileProps) {
               <Mail className="h-5 w-5 text-gray-400 mr-2" />
               <div>
                 <p className="text-sm text-gray-500">Email</p>
-                <p className="font-medium">{employee.personalInfo.email}</p>
+                <p className="font-medium">{employee.email}</p>
               </div>
             </div>
             <div className="flex items-center">
               <Phone className="h-5 w-5 text-gray-400 mr-2" />
               <div>
                 <p className="text-sm text-gray-500">Phone</p>
-                <p className="font-medium">{employee.personalInfo.phone}</p>
+                <p className="font-medium">{employee.phone || "Not provided"}</p>
               </div>
             </div>
             <div className="flex items-center">
               <MapPin className="h-5 w-5 text-gray-400 mr-2" />
               <div>
                 <p className="text-sm text-gray-500">Location</p>
-                <p className="font-medium">{employee.employmentInfo.workLocation}</p>
+                <p className="font-medium">
+                  {employee.city}, {employee.state}, {employee.country}
+                </p>
               </div>
             </div>
           </div>
@@ -193,8 +263,8 @@ export function EmployeeProfile({ employee }: EmployeeProfileProps) {
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="personal">Personal</TabsTrigger>
               <TabsTrigger value="employment">Employment</TabsTrigger>
-              <TabsTrigger value="performance">Performance</TabsTrigger>
               <TabsTrigger value="attendance">Attendance</TabsTrigger>
+              <TabsTrigger value="leave">Leave</TabsTrigger>
               <TabsTrigger value="payroll">Payroll</TabsTrigger>
             </TabsList>
 
@@ -209,23 +279,27 @@ export function EmployeeProfile({ employee }: EmployeeProfileProps) {
                     <dl className="space-y-4">
                       <div className="flex justify-between">
                         <dt className="text-sm font-medium text-gray-500">Department</dt>
-                        <dd className="text-sm">{employee.employmentInfo.department}</dd>
+                        <dd className="text-sm">{employee.department?.name || "Not assigned"}</dd>
                       </div>
                       <div className="flex justify-between">
                         <dt className="text-sm font-medium text-gray-500">Position</dt>
-                        <dd className="text-sm">{employee.employmentInfo.position}</dd>
+                        <dd className="text-sm">{employee.job_title}</dd>
                       </div>
                       <div className="flex justify-between">
                         <dt className="text-sm font-medium text-gray-500">Employment Type</dt>
-                        <dd className="text-sm">{employee.employmentInfo.employmentType}</dd>
+                        <dd className="text-sm">{employee.employment_type?.name || "Not specified"}</dd>
                       </div>
                       <div className="flex justify-between">
                         <dt className="text-sm font-medium text-gray-500">Start Date</dt>
-                        <dd className="text-sm">{new Date(employee.employmentInfo.startDate).toLocaleDateString()}</dd>
+                        <dd className="text-sm">{formatDate(employee.employment_date)}</dd>
                       </div>
                       <div className="flex justify-between">
-                        <dt className="text-sm font-medium text-gray-500">Manager</dt>
-                        <dd className="text-sm">{employee.employmentInfo.manager}</dd>
+                        <dt className="text-sm font-medium text-gray-500">Status</dt>
+                        <dd className="text-sm">
+                          <Badge variant="outline" className={getStatusColor(employee.is_active)}>
+                            {employee.is_active ? "Active" : "Inactive"}
+                          </Badge>
+                        </dd>
                       </div>
                     </dl>
                   </CardContent>
@@ -233,182 +307,102 @@ export function EmployeeProfile({ employee }: EmployeeProfileProps) {
 
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Performance Overview</CardTitle>
+                    <CardTitle className="text-lg">Personal Information</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium text-gray-500">Current Rating</span>
-                          <span className="text-sm font-medium">{employee.performance.currentRating}/5.0</span>
-                        </div>
-                        <Progress value={employee.performance.currentRating * 20} className="h-2" />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Last reviewed on {new Date(employee.performance.lastReviewDate).toLocaleDateString()}
-                        </p>
+                    <dl className="space-y-4">
+                      <div className="flex justify-between">
+                        <dt className="text-sm font-medium text-gray-500">Full Name</dt>
+                        <dd className="text-sm">
+                          {employee.first_name} {employee.middle_name ? employee.middle_name + " " : ""}
+                          {employee.last_name}
+                        </dd>
                       </div>
-
-                      <div className="pt-2">
-                        <h4 className="text-sm font-medium text-gray-500 mb-2">Current Goals</h4>
-                        {employee.performance.goals.slice(0, 2).map((goal: any) => (
-                          <div key={goal.id} className="mb-3">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm">{goal.title}</span>
-                              <span className="text-xs font-medium">{goal.progress}%</span>
-                            </div>
-                            <Progress value={goal.progress} className="h-2" />
-                            <div className="flex items-center justify-between mt-1">
-                              <span className="text-xs text-gray-500">
-                                Due: {new Date(goal.dueDate).toLocaleDateString()}
-                              </span>
-                              <Badge
-                                variant="outline"
-                                className={
-                                  goal.status === "Completed"
-                                    ? "bg-green-100 text-green-800"
-                                    : goal.status === "On Track"
-                                      ? "bg-blue-100 text-blue-800"
-                                      : "bg-amber-100 text-amber-800"
-                                }
-                              >
-                                {goal.status}
-                              </Badge>
-                            </div>
-                          </div>
-                        ))}
+                      <div className="flex justify-between">
+                        <dt className="text-sm font-medium text-gray-500">Gender</dt>
+                        <dd className="text-sm">{employee.gender}</dd>
                       </div>
-                    </div>
+                      <div className="flex justify-between">
+                        <dt className="text-sm font-medium text-gray-500">Date of Birth</dt>
+                        <dd className="text-sm">{formatDate(employee.dob)}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="text-sm font-medium text-gray-500">Personal Email</dt>
+                        <dd className="text-sm">{employee.personal_email}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="text-sm font-medium text-gray-500">Address</dt>
+                        <dd className="text-sm">{employee.address || "Not provided"}</dd>
+                      </div>
+                    </dl>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Leave Balance</CardTitle>
+                    <CardTitle className="text-lg">Next of Kin</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium">Annual Leave</span>
-                          <span className="text-sm">
-                            {employee.leave.balance.annual.remaining}/{employee.leave.balance.annual.total} days
-                          </span>
+                    {employee.next_of_kin ? (
+                      <dl className="space-y-4">
+                        <div className="flex justify-between">
+                          <dt className="text-sm font-medium text-gray-500">Name</dt>
+                          <dd className="text-sm">{employee.next_of_kin.name}</dd>
                         </div>
-                        <Progress
-                          value={(employee.leave.balance.annual.remaining / employee.leave.balance.annual.total) * 100}
-                          className="h-2"
-                        />
-                      </div>
-
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium">Sick Leave</span>
-                          <span className="text-sm">
-                            {employee.leave.balance.sick.remaining}/{employee.leave.balance.sick.total} days
-                          </span>
+                        <div className="flex justify-between">
+                          <dt className="text-sm font-medium text-gray-500">Relationship</dt>
+                          <dd className="text-sm">{employee.next_of_kin.relationship}</dd>
                         </div>
-                        <Progress
-                          value={(employee.leave.balance.sick.remaining / employee.leave.balance.sick.total) * 100}
-                          className="h-2"
-                        />
-                      </div>
-
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium">Personal Leave</span>
-                          <span className="text-sm">
-                            {employee.leave.balance.personal.remaining}/{employee.leave.balance.personal.total} days
-                          </span>
+                        <div className="flex justify-between">
+                          <dt className="text-sm font-medium text-gray-500">Phone</dt>
+                          <dd className="text-sm">{employee.next_of_kin.phone}</dd>
                         </div>
-                        <Progress
-                          value={
-                            (employee.leave.balance.personal.remaining / employee.leave.balance.personal.total) * 100
-                          }
-                          className="h-2"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="mt-4 pt-4 border-t">
-                      <h4 className="text-sm font-medium mb-2">Recent Leave</h4>
-                      {employee.leave.history.slice(0, 2).map((leave: any) => (
-                        <div key={leave.id} className="flex items-center justify-between mb-2">
-                          <div>
-                            <p className="text-sm">{leave.type}</p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(leave.startDate).toLocaleDateString()} -{" "}
-                              {new Date(leave.endDate).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <Badge
-                            variant="outline"
-                            className={
-                              leave.status === "Approved"
-                                ? "bg-green-100 text-green-800"
-                                : leave.status === "Pending"
-                                  ? "bg-amber-100 text-amber-800"
-                                  : "bg-red-100 text-red-800"
-                            }
-                          >
-                            {leave.status}
-                          </Badge>
+                        <div className="flex justify-between">
+                          <dt className="text-sm font-medium text-gray-500">Email</dt>
+                          <dd className="text-sm">{employee.next_of_kin.email || "Not provided"}</dd>
                         </div>
-                      ))}
-                    </div>
+                      </dl>
+                    ) : (
+                      <p className="text-sm text-gray-500">No next of kin information provided.</p>
+                    )}
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Attendance This Month</CardTitle>
+                    <CardTitle className="text-lg">Payroll Information</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div className="bg-green-50 rounded-lg p-3 text-center">
-                        <p className="text-2xl font-bold text-green-600">{employee.attendance.currentMonth.present}</p>
-                        <p className="text-sm text-gray-500">Present</p>
+                    <dl className="space-y-4">
+                      <div className="flex justify-between">
+                        <dt className="text-sm font-medium text-gray-500">Payroll Class</dt>
+                        <dd className="text-sm">{employee.payroll_class?.name || "Not assigned"}</dd>
                       </div>
-                      <div className="bg-red-50 rounded-lg p-3 text-center">
-                        <p className="text-2xl font-bold text-red-600">{employee.attendance.currentMonth.absent}</p>
-                        <p className="text-sm text-gray-500">Absent</p>
+                      <div className="flex justify-between">
+                        <dt className="text-sm font-medium text-gray-500">Basic Pay</dt>
+                        <dd className="text-sm">
+                          {employee.payroll_class?.basic_pay
+                            ? `₦${employee.payroll_class.basic_pay.toLocaleString()}`
+                            : "Not specified"}
+                        </dd>
                       </div>
-                      <div className="bg-amber-50 rounded-lg p-3 text-center">
-                        <p className="text-2xl font-bold text-amber-600">{employee.attendance.currentMonth.leave}</p>
-                        <p className="text-sm text-gray-500">Leave</p>
+                      <div className="flex justify-between">
+                        <dt className="text-sm font-medium text-gray-500">Total Allowances</dt>
+                        <dd className="text-sm">
+                          {employee.payroll_class?.total_allowances
+                            ? `₦${employee.payroll_class.total_allowances.toLocaleString()}`
+                            : "Not specified"}
+                        </dd>
                       </div>
-                      <div className="bg-blue-50 rounded-lg p-3 text-center">
-                        <p className="text-2xl font-bold text-blue-600">{employee.attendance.currentMonth.late}</p>
-                        <p className="text-sm text-gray-500">Late</p>
+                      <div className="flex justify-between">
+                        <dt className="text-sm font-medium text-gray-500">Bank</dt>
+                        <dd className="text-sm">{employee.bank?.name || "Not specified"}</dd>
                       </div>
-                    </div>
-
-                    <div className="mt-4 pt-4 border-t">
-                      <h4 className="text-sm font-medium mb-2">Recent Attendance</h4>
-                      {employee.attendance.history.slice(0, 3).map((record: any, index: number) => (
-                        <div key={index} className="flex items-center justify-between mb-2">
-                          <div>
-                            <p className="text-sm">{new Date(record.date).toLocaleDateString()}</p>
-                            <p className="text-xs text-gray-500">
-                              {record.status === "Present"
-                                ? `${record.clockIn} - ${record.clockOut}`
-                                : record.reason || "Not Available"}
-                            </p>
-                          </div>
-                          <Badge
-                            variant="outline"
-                            className={
-                              record.status === "Present"
-                                ? "bg-green-100 text-green-800"
-                                : record.status === "Leave"
-                                  ? "bg-amber-100 text-amber-800"
-                                  : "bg-red-100 text-red-800"
-                            }
-                          >
-                            {record.status}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
+                      <div className="flex justify-between">
+                        <dt className="text-sm font-medium text-gray-500">Account Number</dt>
+                        <dd className="text-sm">{employee.bank_account_number || "Not provided"}</dd>
+                      </div>
+                    </dl>
                   </CardContent>
                 </Card>
               </div>
@@ -426,41 +420,59 @@ export function EmployeeProfile({ employee }: EmployeeProfileProps) {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <dt className="text-sm font-medium text-gray-500">First Name</dt>
-                          <dd className="mt-1">{employee.personalInfo.firstName}</dd>
+                          <dd className="mt-1">{employee.first_name}</dd>
                         </div>
                         <div>
                           <dt className="text-sm font-medium text-gray-500">Last Name</dt>
-                          <dd className="mt-1">{employee.personalInfo.lastName}</dd>
+                          <dd className="mt-1">{employee.last_name}</dd>
+                        </div>
+                      </div>
+
+                      {employee.middle_name && (
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Middle Name</dt>
+                          <dd className="mt-1">{employee.middle_name}</dd>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Email</dt>
+                          <dd className="mt-1">{employee.email}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Personal Email</dt>
+                          <dd className="mt-1">{employee.personal_email}</dd>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">Email</dt>
-                          <dd className="mt-1">{employee.personalInfo.email}</dd>
+                          <dt className="text-sm font-medium text-gray-500">Phone</dt>
+                          <dd className="mt-1">{employee.phone || "Not provided"}</dd>
                         </div>
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">Phone</dt>
-                          <dd className="mt-1">{employee.personalInfo.phone}</dd>
+                          <dt className="text-sm font-medium text-gray-500">Gender</dt>
+                          <dd className="mt-1">{employee.gender}</dd>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <dt className="text-sm font-medium text-gray-500">Date of Birth</dt>
-                          <dd className="mt-1">{new Date(employee.personalInfo.dateOfBirth).toLocaleDateString()}</dd>
+                          <dd className="mt-1">{formatDate(employee.dob)}</dd>
                         </div>
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">Gender</dt>
-                          <dd className="mt-1">{employee.personalInfo.gender}</dd>
+                          <dt className="text-sm font-medium text-gray-500">Staff ID</dt>
+                          <dd className="mt-1">{employee.staff_id || "Not assigned"}</dd>
                         </div>
                       </div>
 
                       <div>
                         <dt className="text-sm font-medium text-gray-500">Address</dt>
                         <dd className="mt-1">
-                          {employee.personalInfo.address}, {employee.personalInfo.city}, {employee.personalInfo.state}{" "}
-                          {employee.personalInfo.zipCode}, {employee.personalInfo.country}
+                          {employee.address ? `${employee.address}, ` : ""}
+                          {employee.city}, {employee.state}, {employee.country}
                         </dd>
                       </div>
                     </dl>
@@ -469,112 +481,40 @@ export function EmployeeProfile({ employee }: EmployeeProfileProps) {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Emergency Contact</CardTitle>
+                    <CardTitle>Next of Kin</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <dl className="space-y-4">
-                      <div>
-                        <dt className="text-sm font-medium text-gray-500">Name</dt>
-                        <dd className="mt-1">{employee.documents.emergencyContact.name}</dd>
+                    {employee.next_of_kin ? (
+                      <dl className="space-y-4">
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Name</dt>
+                          <dd className="mt-1">{employee.next_of_kin.name}</dd>
+                        </div>
+
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Relationship</dt>
+                          <dd className="mt-1">{employee.next_of_kin.relationship}</dd>
+                        </div>
+
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Phone</dt>
+                          <dd className="mt-1">{employee.next_of_kin.phone}</dd>
+                        </div>
+
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Email</dt>
+                          <dd className="mt-1">{employee.next_of_kin.email || "Not provided"}</dd>
+                        </div>
+                      </dl>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-40 text-center">
+                        <User className="h-10 w-10 text-gray-300 mb-2" />
+                        <p className="text-gray-500">No next of kin information provided</p>
+                        <Button variant="outline" size="sm" className="mt-4" asChild>
+                          <Link href={`/admin/employees/${employee.id}/edit`}>Add Next of Kin</Link>
+                        </Button>
                       </div>
-
-                      <div>
-                        <dt className="text-sm font-medium text-gray-500">Relationship</dt>
-                        <dd className="mt-1">{employee.documents.emergencyContact.relationship}</dd>
-                      </div>
-
-                      <div>
-                        <dt className="text-sm font-medium text-gray-500">Phone</dt>
-                        <dd className="mt-1">{employee.documents.emergencyContact.phone}</dd>
-                      </div>
-                    </dl>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Documents</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2">
-                      <li className="flex items-center justify-between">
-                        <span className="text-sm">Resume/CV</span>
-                        <Badge
-                          variant="outline"
-                          className={
-                            employee.documents.resume ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                          }
-                        >
-                          {employee.documents.resume ? "Submitted" : "Missing"}
-                        </Badge>
-                      </li>
-                      <li className="flex items-center justify-between">
-                        <span className="text-sm">ID Proof</span>
-                        <Badge
-                          variant="outline"
-                          className={
-                            employee.documents.idProof ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                          }
-                        >
-                          {employee.documents.idProof ? "Submitted" : "Missing"}
-                        </Badge>
-                      </li>
-                      <li className="flex items-center justify-between">
-                        <span className="text-sm">Address Proof</span>
-                        <Badge
-                          variant="outline"
-                          className={
-                            employee.documents.addressProof
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
-                          }
-                        >
-                          {employee.documents.addressProof ? "Submitted" : "Missing"}
-                        </Badge>
-                      </li>
-                      <li className="flex items-center justify-between">
-                        <span className="text-sm">Education Certificates</span>
-                        <Badge
-                          variant="outline"
-                          className={
-                            employee.documents.educationCertificates
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
-                          }
-                        >
-                          {employee.documents.educationCertificates ? "Submitted" : "Missing"}
-                        </Badge>
-                      </li>
-                      <li className="flex items-center justify-between">
-                        <span className="text-sm">Offer Letter</span>
-                        <Badge
-                          variant="outline"
-                          className={
-                            employee.documents.offerLetter ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                          }
-                        >
-                          {employee.documents.offerLetter ? "Submitted" : "Missing"}
-                        </Badge>
-                      </li>
-                      <li className="flex items-center justify-between">
-                        <span className="text-sm">Contract Agreement</span>
-                        <Badge
-                          variant="outline"
-                          className={
-                            employee.documents.contractAgreement
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
-                          }
-                        >
-                          {employee.documents.contractAgreement ? "Submitted" : "Missing"}
-                        </Badge>
-                      </li>
-                    </ul>
-
-                    <Button variant="outline" className="w-full mt-4">
-                      <FileUp className="mr-2 h-4 w-4" />
-                      Upload Documents
-                    </Button>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -592,13 +532,13 @@ export function EmployeeProfile({ employee }: EmployeeProfileProps) {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <dt className="text-sm font-medium text-gray-500">Employee ID</dt>
-                          <dd className="mt-1">{employee.employmentInfo.employeeId}</dd>
+                          <dd className="mt-1">{employee.staff_id || "Not assigned"}</dd>
                         </div>
                         <div>
                           <dt className="text-sm font-medium text-gray-500">Status</dt>
                           <dd className="mt-1">
-                            <Badge variant="outline" className={getStatusColor(employee.employmentInfo.status)}>
-                              {employee.employmentInfo.status}
+                            <Badge variant="outline" className={getStatusColor(employee.is_active)}>
+                              {employee.is_active ? "Active" : "Inactive"}
                             </Badge>
                           </dd>
                         </div>
@@ -606,44 +546,35 @@ export function EmployeeProfile({ employee }: EmployeeProfileProps) {
 
                       <div>
                         <dt className="text-sm font-medium text-gray-500">Department</dt>
-                        <dd className="mt-1">{employee.employmentInfo.department}</dd>
+                        <dd className="mt-1">{employee.department?.name || "Not assigned"}</dd>
                       </div>
 
+                      {employee.department?.description && (
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Department Description</dt>
+                          <dd className="mt-1">{employee.department.description}</dd>
+                        </div>
+                      )}
+
                       <div>
-                        <dt className="text-sm font-medium text-gray-500">Position</dt>
-                        <dd className="mt-1">{employee.employmentInfo.position}</dd>
+                        <dt className="text-sm font-medium text-gray-500">Job Title</dt>
+                        <dd className="mt-1">{employee.job_title}</dd>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <dt className="text-sm font-medium text-gray-500">Employment Type</dt>
-                          <dd className="mt-1">{employee.employmentInfo.employmentType}</dd>
+                          <dd className="mt-1">{employee.employment_type?.name || "Not specified"}</dd>
                         </div>
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">Start Date</dt>
-                          <dd className="mt-1">{new Date(employee.employmentInfo.startDate).toLocaleDateString()}</dd>
+                          <dt className="text-sm font-medium text-gray-500">Employment Date</dt>
+                          <dd className="mt-1">{formatDate(employee.employment_date)}</dd>
                         </div>
                       </div>
 
                       <div>
-                        <dt className="text-sm font-medium text-gray-500">Manager</dt>
-                        <dd className="mt-1">{employee.employmentInfo.manager}</dd>
-                      </div>
-
-                      <div>
-                        <dt className="text-sm font-medium text-gray-500">Work Location</dt>
-                        <dd className="mt-1">{employee.employmentInfo.workLocation}</dd>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <dt className="text-sm font-medium text-gray-500">Work Email</dt>
-                          <dd className="mt-1">{employee.employmentInfo.workEmail}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-sm font-medium text-gray-500">Work Phone</dt>
-                          <dd className="mt-1">{employee.employmentInfo.workPhone}</dd>
-                        </div>
+                        <dt className="text-sm font-medium text-gray-500">Work Email</dt>
+                        <dd className="mt-1">{employee.email}</dd>
                       </div>
                     </dl>
                   </CardContent>
@@ -651,157 +582,39 @@ export function EmployeeProfile({ employee }: EmployeeProfileProps) {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Compensation</CardTitle>
+                    <CardTitle>Roles & Permissions</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <dl className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <dt className="text-sm font-medium text-gray-500">Salary Type</dt>
-                          <dd className="mt-1">{employee.compensationInfo.salaryType}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-sm font-medium text-gray-500">Salary Amount</dt>
-                          <dd className="mt-1">{employee.compensationInfo.salaryAmount}</dd>
-                        </div>
-                      </div>
-
+                    <div className="space-y-6">
                       <div>
-                        <dt className="text-sm font-medium text-gray-500">Pay Frequency</dt>
-                        <dd className="mt-1">{employee.compensationInfo.payFrequency}</dd>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <dt className="text-sm font-medium text-gray-500">Bank Name</dt>
-                          <dd className="mt-1">{employee.compensationInfo.bankName}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-sm font-medium text-gray-500">Account Number</dt>
-                          <dd className="mt-1">{employee.compensationInfo.accountNumber}</dd>
-                        </div>
-                      </div>
-
-                      <div>
-                        <dt className="text-sm font-medium text-gray-500">Benefits</dt>
-                        <dd className="mt-1">
+                        <h4 className="text-sm font-medium text-gray-500 mb-2">Roles</h4>
+                        {employee.roles && employee.roles.length > 0 ? (
                           <div className="flex flex-wrap gap-2">
-                            {employee.compensationInfo.benefits.map((benefit: string, index: number) => (
-                              <Badge key={index} variant="outline" className="bg-teal-50 text-teal-700">
-                                {benefit}
+                            {employee.roles.map((role: any) => (
+                              <Badge key={role.id} variant="outline" className="bg-blue-50 text-blue-700">
+                                {role.name}
                               </Badge>
                             ))}
                           </div>
-                        </dd>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <dt className="text-sm font-medium text-gray-500">Last Review</dt>
-                          <dd className="mt-1">
-                            {new Date(employee.compensationInfo.lastReview).toLocaleDateString()}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-sm font-medium text-gray-500">Next Review</dt>
-                          <dd className="mt-1">
-                            {new Date(employee.compensationInfo.nextReview).toLocaleDateString()}
-                          </dd>
-                        </div>
-                      </div>
-                    </dl>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            {/* Performance Tab */}
-            <TabsContent value="performance" className="mt-6">
-              <div className="grid gap-6 md:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Performance Overview</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium">Overall Rating</span>
-                          <span className="text-sm font-medium">{employee.performance.currentRating}/5.0</span>
-                        </div>
-                        <Progress value={employee.performance.currentRating * 20} className="h-2" />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Last reviewed on {new Date(employee.performance.lastReviewDate).toLocaleDateString()}
-                        </p>
+                        ) : (
+                          <p className="text-sm text-gray-500">No roles assigned</p>
+                        )}
                       </div>
 
                       <div>
-                        <h4 className="text-sm font-medium mb-2">Review Comments</h4>
-                        <p className="text-sm text-gray-700">{employee.performance.reviewComments}</p>
-                      </div>
-
-                      <div>
-                        <h4 className="text-sm font-medium mb-2">Skills</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {employee.performance.skills.map((skill: string, index: number) => (
-                            <Badge key={index} variant="outline" className="bg-sky-50 text-sky-700">
-                              {skill}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="text-sm font-medium mb-2">Certifications</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {employee.performance.certifications.map((cert: string, index: number) => (
-                            <Badge key={index} variant="outline" className="bg-purple-50 text-purple-700">
-                              {cert}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Performance Goals</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      {employee.performance.goals.map((goal: any) => (
-                        <div key={goal.id} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-medium">{goal.title}</h4>
-                            <Badge
-                              variant="outline"
-                              className={
-                                goal.status === "Completed"
-                                  ? "bg-green-100 text-green-800"
-                                  : goal.status === "On Track"
-                                    ? "bg-blue-100 text-blue-800"
-                                    : "bg-amber-100 text-amber-800"
-                              }
-                            >
-                              {goal.status}
-                            </Badge>
+                        <h4 className="text-sm font-medium text-gray-500 mb-2">Permissions</h4>
+                        {employee.permissions && employee.permissions.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {employee.permissions.map((permission: any) => (
+                              <Badge key={permission.id} variant="outline" className="bg-purple-50 text-purple-700">
+                                {permission.name}
+                              </Badge>
+                            ))}
                           </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-500">
-                              Due: {new Date(goal.dueDate).toLocaleDateString()}
-                            </span>
-                            <span className="text-xs font-medium">{goal.progress}% Complete</span>
-                          </div>
-                          <Progress value={goal.progress} className="h-2" />
-                        </div>
-                      ))}
-
-                      <Button variant="outline" className="w-full">
-                        <Award className="mr-2 h-4 w-4" />
-                        Add New Goal
-                      </Button>
+                        ) : (
+                          <p className="text-sm text-gray-500">No specific permissions assigned</p>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -810,38 +623,12 @@ export function EmployeeProfile({ employee }: EmployeeProfileProps) {
 
             {/* Attendance Tab */}
             <TabsContent value="attendance" className="mt-6">
-              <div className="grid gap-6 md:grid-cols-3">
-                <Card className="md:col-span-3">
-                  <CardHeader>
-                    <CardTitle>Monthly Overview</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                      <div className="bg-green-50 rounded-lg p-4 text-center">
-                        <p className="text-3xl font-bold text-green-600">{employee.attendance.currentMonth.present}</p>
-                        <p className="text-sm text-gray-500">Present</p>
-                      </div>
-                      <div className="bg-red-50 rounded-lg p-4 text-center">
-                        <p className="text-3xl font-bold text-red-600">{employee.attendance.currentMonth.absent}</p>
-                        <p className="text-sm text-gray-500">Absent</p>
-                      </div>
-                      <div className="bg-amber-50 rounded-lg p-4 text-center">
-                        <p className="text-3xl font-bold text-amber-600">{employee.attendance.currentMonth.leave}</p>
-                        <p className="text-sm text-gray-500">Leave</p>
-                      </div>
-                      <div className="bg-blue-50 rounded-lg p-4 text-center">
-                        <p className="text-3xl font-bold text-blue-600">{employee.attendance.currentMonth.late}</p>
-                        <p className="text-sm text-gray-500">Late</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="md:col-span-3">
-                  <CardHeader>
-                    <CardTitle>Attendance History</CardTitle>
-                  </CardHeader>
-                  <CardContent>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Attendance Records</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {employee.attendance && employee.attendance.length > 0 ? (
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
@@ -850,29 +637,33 @@ export function EmployeeProfile({ employee }: EmployeeProfileProps) {
                             <th className="px-4 py-2 text-left font-medium">Status</th>
                             <th className="px-4 py-2 text-left font-medium">Clock In</th>
                             <th className="px-4 py-2 text-left font-medium">Clock Out</th>
-                            <th className="px-4 py-2 text-left font-medium">Hours</th>
+                            <th className="px-4 py-2 text-left font-medium">Total Hours</th>
                             <th className="px-4 py-2 text-left font-medium">Notes</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {employee.attendance.history.map((record: any, index: number) => {
+                          {employee.attendance.map((record: any) => {
                             // Calculate hours if present
                             let hours = "-"
-                            if (record.status === "Present" && record.clockIn !== "-" && record.clockOut !== "-") {
-                              // This is simplified - in a real app you'd parse the times properly
-                              hours = "8h 30m"
+                            if (record.clock_in && record.clock_out) {
+                              const clockIn = new Date(record.clock_in)
+                              const clockOut = new Date(record.clock_out)
+                              const diffMs = clockOut.getTime() - clockIn.getTime()
+                              const diffHrs = Math.floor(diffMs / (1000 * 60 * 60))
+                              const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+                              hours = `${diffHrs}h ${diffMins}m`
                             }
 
                             return (
-                              <tr key={index} className="border-b">
-                                <td className="px-4 py-2">{new Date(record.date).toLocaleDateString()}</td>
+                              <tr key={record.id} className="border-b">
+                                <td className="px-4 py-2">{formatDate(record.date)}</td>
                                 <td className="px-4 py-2">
                                   <Badge
                                     variant="outline"
                                     className={
-                                      record.status === "Present"
+                                      record.status === "PRESENT"
                                         ? "bg-green-100 text-green-800"
-                                        : record.status === "Leave"
+                                        : record.status === "LEAVE"
                                           ? "bg-amber-100 text-amber-800"
                                           : "bg-red-100 text-red-800"
                                     }
@@ -880,69 +671,226 @@ export function EmployeeProfile({ employee }: EmployeeProfileProps) {
                                     {record.status}
                                   </Badge>
                                 </td>
-                                <td className="px-4 py-2">{record.clockIn}</td>
-                                <td className="px-4 py-2">{record.clockOut}</td>
+                                <td className="px-4 py-2">
+                                  {record.clock_in ? new Date(record.clock_in).toLocaleTimeString() : "-"}
+                                </td>
+                                <td className="px-4 py-2">
+                                  {record.clock_out ? new Date(record.clock_out).toLocaleTimeString() : "-"}
+                                </td>
                                 <td className="px-4 py-2">{hours}</td>
-                                <td className="px-4 py-2">{record.reason || "-"}</td>
+                                <td className="px-4 py-2">{record.notes || "-"}</td>
                               </tr>
                             )
                           })}
                         </tbody>
                       </table>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-40 text-center">
+                      <Clock className="h-10 w-10 text-gray-300 mb-2" />
+                      <p className="text-gray-500">No attendance records found</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Leave Tab */}
+            <TabsContent value="leave" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Leave Requests</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {employee.leave_requests && employee.leave_requests.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="px-4 py-2 text-left font-medium">Type</th>
+                            <th className="px-4 py-2 text-left font-medium">Start Date</th>
+                            <th className="px-4 py-2 text-left font-medium">End Date</th>
+                            <th className="px-4 py-2 text-left font-medium">Days</th>
+                            <th className="px-4 py-2 text-left font-medium">Status</th>
+                            <th className="px-4 py-2 text-left font-medium">Reason</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {employee.leave_requests.map((leave: any) => {
+                            // Calculate days
+                            const startDate = new Date(leave.start_date)
+                            const endDate = new Date(leave.end_date)
+                            const diffTime = Math.abs(endDate.getTime() - startDate.getTime())
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1 // +1 to include both start and end days
+
+                            return (
+                              <tr key={leave.id} className="border-b">
+                                <td className="px-4 py-2">{leave.type}</td>
+                                <td className="px-4 py-2">{formatDate(leave.start_date)}</td>
+                                <td className="px-4 py-2">{formatDate(leave.end_date)}</td>
+                                <td className="px-4 py-2">{diffDays}</td>
+                                <td className="px-4 py-2">
+                                  <Badge
+                                    variant="outline"
+                                    className={
+                                      leave.status === "APPROVED"
+                                        ? "bg-green-100 text-green-800"
+                                        : leave.status === "PENDING"
+                                          ? "bg-amber-100 text-amber-800"
+                                          : "bg-red-100 text-red-800"
+                                    }
+                                  >
+                                    {leave.status}
+                                  </Badge>
+                                </td>
+                                <td className="px-4 py-2">{leave.reason || "-"}</td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-40 text-center">
+                      <Calendar className="h-10 w-10 text-gray-300 mb-2" />
+                      <p className="text-gray-500">No leave requests found</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* Payroll Tab */}
             <TabsContent value="payroll" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Payroll History</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="px-4 py-2 text-left font-medium">Period</th>
-                          <th className="px-4 py-2 text-left font-medium">Pay Date</th>
-                          <th className="px-4 py-2 text-left font-medium">Gross Amount</th>
-                          <th className="px-4 py-2 text-left font-medium">Net Amount</th>
-                          <th className="px-4 py-2 text-left font-medium">Status</th>
-                          <th className="px-4 py-2 text-left font-medium">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {employee.payroll.history.map((record: any) => (
-                          <tr key={record.id} className="border-b">
-                            <td className="px-4 py-2">{record.period}</td>
-                            <td className="px-4 py-2">{new Date(record.payDate).toLocaleDateString()}</td>
-                            <td className="px-4 py-2">{record.grossAmount}</td>
-                            <td className="px-4 py-2">{record.netAmount}</td>
-                            <td className="px-4 py-2">
-                              <Badge variant="outline" className="bg-green-100 text-green-800">
-                                {record.status}
-                              </Badge>
-                            </td>
-                            <td className="px-4 py-2">
-                              <Button variant="ghost" size="sm">
-                                <Download className="mr-2 h-4 w-4" />
-                                Payslip
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="grid gap-6 md:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Payroll Information</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <dl className="space-y-4">
+                      <div>
+                        <dt className="text-sm font-medium text-gray-500">Payroll Class</dt>
+                        <dd className="mt-1">{employee.payroll_class?.name || "Not assigned"}</dd>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Basic Pay</dt>
+                          <dd className="mt-1">
+                            {employee.payroll_class?.basic_pay
+                              ? `₦${employee.payroll_class.basic_pay.toLocaleString()}`
+                              : "Not specified"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Total Allowances</dt>
+                          <dd className="mt-1">
+                            {employee.payroll_class?.total_allowances
+                              ? `₦${employee.payroll_class.total_allowances.toLocaleString()}`
+                              : "Not specified"}
+                          </dd>
+                        </div>
+                      </div>
+
+                      {employee.payroll_class?.housing_allowance && (
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Housing Allowance</dt>
+                          <dd className="mt-1">₦{employee.payroll_class.housing_allowance.toLocaleString()}</dd>
+                        </div>
+                      )}
+
+                      {employee.payroll_class?.transport_allowance && (
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Transport Allowance</dt>
+                          <dd className="mt-1">₦{employee.payroll_class.transport_allowance.toLocaleString()}</dd>
+                        </div>
+                      )}
+
+                      {employee.payroll_class?.health_allowance && (
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Health Allowance</dt>
+                          <dd className="mt-1">₦{employee.payroll_class.health_allowance.toLocaleString()}</dd>
+                        </div>
+                      )}
+
+                      <div>
+                        <dt className="text-sm font-medium text-gray-500">Tax Number</dt>
+                        <dd className="mt-1">{employee.tax_number || "Not provided"}</dd>
+                      </div>
+                    </dl>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Bank & Pension Details</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <dl className="space-y-4">
+                      <div>
+                        <dt className="text-sm font-medium text-gray-500">Bank Name</dt>
+                        <dd className="mt-1">{employee.bank?.name || "Not specified"}</dd>
+                      </div>
+
+                      <div>
+                        <dt className="text-sm font-medium text-gray-500">Account Number</dt>
+                        <dd className="mt-1">{employee.bank_account_number || "Not provided"}</dd>
+                      </div>
+
+                      <div>
+                        <dt className="text-sm font-medium text-gray-500">Pension Provider</dt>
+                        <dd className="mt-1">{employee.pension?.name || "Not specified"}</dd>
+                      </div>
+
+                      <div>
+                        <dt className="text-sm font-medium text-gray-500">Pension Number</dt>
+                        <dd className="mt-1">{employee.pension_number || "Not provided"}</dd>
+                      </div>
+                    </dl>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function EmployeeProfileSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="border rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-gray-200 h-32 sm:h-40"></div>
+        <div className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between -mt-16 sm:-mt-20 mb-4 sm:mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center">
+              <Skeleton className="h-24 w-24 sm:h-32 sm:w-32 rounded-full" />
+              <div className="mt-4 sm:mt-0 sm:ml-6">
+                <Skeleton className="h-8 w-48 mb-2" />
+                <Skeleton className="h-4 w-32 mb-1" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <div className="grid gap-6 md:grid-cols-2">
+              <Skeleton className="h-64 w-full" />
+              <Skeleton className="h-64 w-full" />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { AttendanceList } from "@/components/admin/attendance/attendance-list"
 import { AttendanceFilters } from "@/components/admin/attendance/attendance-filters"
 import { AttendanceStats } from "@/components/admin/attendance/attendance-stats"
 import { Button } from "@/components/ui/button"
-import { Download, FileText } from "lucide-react"
+import { Download, FileText, Users } from "lucide-react"
 import Link from "next/link"
 
 export default function AttendancePage() {
@@ -18,6 +18,12 @@ export default function AttendancePage() {
             <p className="text-gray-500">Track and manage employee attendance records</p>
           </div>
           <div className="mt-4 flex gap-2 sm:mt-0">
+            <Button variant="outline" asChild>
+              <Link href="/admin/attendance/records">
+                <Users className="mr-2 h-4 w-4" />
+                View All Records
+              </Link>
+            </Button>
             <Button variant="outline" asChild>
               <Link href="/admin/attendance/report">
                 <FileText className="mr-2 h-4 w-4" />

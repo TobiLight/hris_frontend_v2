@@ -7,6 +7,7 @@ export interface TeamLead {
   email: string;
   staff_id: number;
   job_title: string;
+  image_uri: string | null;
 }
 
 export interface NextOfKin {
@@ -137,7 +138,7 @@ export interface TeamMember {
   pension_id: string | null;
   pension: Pension | null;
   pension_number: string | null;
-  roles: Role[];
+  role: Role;
   permissions: Permission[];
   is_active: boolean;
 }
@@ -176,8 +177,9 @@ export async function fetchDepartments(): Promise<Department[]> {
 export async function fetchDepartmentById(id: string): Promise<Department> {
   try {
     console.log(`Fetching department with ID: ${id}`);
-    const department = await apiRequest<Department>(`/departments/${id}`);
-    console.log("Fetched department:", department);
+    const department = await apiRequest<Department>(`/department/${id}/view`, {
+      method: "GET",
+    });
     return department;
   } catch (error) {
     console.error(`Error fetching department with ID ${id}:`, error);
@@ -192,9 +194,9 @@ export async function createDepartment(
   departmentData: Partial<Department>
 ): Promise<Department> {
   try {
-    const department = await apiRequest<Department>("/departments", {
+    const department = await apiRequest<Department>("/department/create", {
       method: "POST",
-      body: departmentData,
+      body: JSON.stringify(departmentData),
     });
     return department;
   } catch (error) {
@@ -213,7 +215,7 @@ export async function updateDepartment(
   try {
     const department = await apiRequest<Department>(`/departments/${id}`, {
       method: "PUT",
-      body: departmentData,
+      body: JSON.stringify(departmentData),
     });
     return department;
   } catch (error) {

@@ -24,16 +24,22 @@ export function middleware(request: NextRequest) {
   if (isAuthenticated && isAuthRoute) {
     // Redirect to dashboard (this is simplified - in a real app you'd check the user role)
     // Get user role from cookies to determine where to redirect
-    const userRole = request.cookies.get("user_role")?.value 
-    const userRoleJSON = JSON.parse(userRole) as {id: string, name: string} || {id: "emp", name: "employee"}
+    const userRole =
+      request.cookies.get("user_role")?.value ??
+      JSON.stringify({ id: "", name: "employee" });
+    console.log("user role", userRole);
+    const userRoleJSON =
+      JSON.parse(userRole) ??
+      ({ id: "", name: "employee" } as { id: string; name: string });
 
-    console.log("userRoleJSON", userRoleJSON)
+    console.log("super_admin", userRoleJSON);
 
-    const redirectPath = userRoleJSON.name === "super_admin" ||
-        userRole.name === "manager" ||
-        userRole.name === "hr"
-      ? "/admin/dashboard"
-      : "/employee/dashboard";
+    const redirectPath =
+      userRoleJSON.name.toLowerCase() === "super_admin" ||
+      userRoleJSON.name.toLowerCase() === "manager" ||
+      userRoleJSON.name.toLowerCase() === "hr"
+        ? "/admin/dashboard"
+        : "/employee/dashboard";
 
     return NextResponse.redirect(new URL(redirectPath, request.url));
   }

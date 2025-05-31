@@ -1,48 +1,21 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { toast } from "@/hooks/use-toast";
-import {
-  User,
-  Briefcase,
-  DollarSign,
-  FileText,
-  HelpCircle,
-  Loader2,
-  Calendar,
-} from "lucide-react";
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useToast } from "@/components/ui/use-toast"
+import { User, Briefcase, DollarSign, FileText, HelpCircle, Loader2, Calendar } from "lucide-react"
 import {
   createEmployee,
   fetchDepartments,
@@ -60,53 +33,37 @@ import {
   type Role,
   type Permission,
   NextOfKin,
-} from "@/lib/api/employee-service";
+} from "@/lib/api/employee-service"
 
 // Form schema for personal information
 const personalInfoSchema = z.object({
-  first_name: z
-    .string()
-    .min(2, { message: "First name must be at least 2 characters" }),
+  first_name: z.string().min(2, { message: "First name must be at least 2 characters" }),
   middle_name: z.string().optional(),
-  last_name: z
-    .string()
-    .min(2, { message: "Last name must be at least 2 characters" }),
+  last_name: z.string().min(2, { message: "Last name must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
-  phone: z
-    .string()
-    .min(10, { message: "Please enter a valid phone number" })
-    .optional(),
+  phone: z.string().min(10, { message: "Please enter a valid phone number" }).optional(),
   dob: z.string().min(1, { message: "Date of birth is required" }),
-  gender: z.enum(["MALE", "FEMALE"], {
+  gender: z.enum(["MALE", "FEMALE", "OTHER"], {
     required_error: "Please select a gender",
   }),
   address: z.string().optional(),
   city: z.string().min(1, { message: "City is required" }),
   state: z.string().min(1, { message: "State is required" }),
   country: z.string().min(1, { message: "Country is required" }),
-  personal_email: z
-    .string()
-    .email({ message: "Please enter a valid personal email" }),
+  personal_email: z.string().email({ message: "Please enter a valid personal email" }),
   image_uri: z.string().optional(),
-  password: z
-    .string()
-    .min(6, { message: "Password must be at least 6 characters" }),
-});
+})
 
 // Form schema for employment information
 const employmentInfoSchema = z.object({
   job_title: z.string().min(1, { message: "Job title is required" }),
   department_id: z.string().min(1, { message: "Department is required" }),
-  employment_type_id: z
-    .string()
-    .min(1, { message: "Employment type is required" }),
-  employment_date: z
-    .string()
-    .min(1, { message: "Employment date is required" }),
+  employment_type_id: z.string().min(1, { message: "Employment type is required" }),
+  employment_date: z.string().min(1, { message: "Employment date is required" }),
   is_active: z.boolean().default(true),
   user_role: z.string().min(1, { message: "Role is required" }),
   user_permissions: z.array(z.string()).optional(),
-});
+})
 
 // Form schema for compensation information
 const compensationInfoSchema = z.object({
@@ -116,7 +73,7 @@ const compensationInfoSchema = z.object({
   tax_number: z.string().optional(),
   pension_id: z.string().optional(),
   pension_number: z.string().optional(),
-});
+})
 
 // Form schema for next of kin
 const nextOfKinSchema = z.object({
@@ -124,17 +81,12 @@ const nextOfKinSchema = z.object({
     .object({
       name: z.string().min(1, { message: "Next of kin name is required" }),
       relationship: z.string().min(1, { message: "Relationship is required" }),
-      phone: z
-        .string()
-        .min(10, { message: "Please enter a valid phone number" }),
-      email: z
-        .string()
-        .email({ message: "Please enter a valid email address" })
-        .optional(),
+      phone: z.string().min(10, { message: "Please enter a valid phone number" }),
+      email: z.string().email({ message: "Please enter a valid email address" }).optional(),
     })
     .optional(),
-  // password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-});
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+})
 
 // Combined schema
 const employeeSchema = z.object({
@@ -142,50 +94,46 @@ const employeeSchema = z.object({
   employmentInfo: employmentInfoSchema,
   compensationInfo: compensationInfoSchema,
   nextOfKinInfo: nextOfKinSchema,
-});
+})
 
-type EmployeeFormValues = z.infer<typeof employeeSchema>;
+type EmployeeFormValues = z.infer<typeof employeeSchema>
 
 // Local storage key
-const EMPLOYEE_FORM_STORAGE_KEY = "employee_add_form_data";
+const EMPLOYEE_FORM_STORAGE_KEY = "employee_add_form_data"
 
 export function EmployeeAddForm() {
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState("personal");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter()
+  const { toast } = useToast()
+  const [activeTab, setActiveTab] = useState("personal")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // State for dropdown options
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [employmentTypes, setEmploymentTypes] = useState<EmploymentType[]>([]);
-  const [payrollClasses, setPayrollClasses] = useState<PayrollClass[]>([]);
-  const [banks, setBanks] = useState<Bank[]>([]);
-  const [pensions, setPensions] = useState<Pension[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [permissions, setPermissions] = useState<Permission[]>([]);
-  const [nextofkin, setNextOfKin] = useState<NextOfKin>();
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [employmentTypes, setEmploymentTypes] = useState<EmploymentType[]>([])
+  const [payrollClasses, setPayrollClasses] = useState<PayrollClass[]>([])
+  const [banks, setBanks] = useState<Bank[]>([])
+  const [pensions, setPensions] = useState<Pension[]>([])
+  const [roles, setRoles] = useState<Role[]>([])
+  const [permissions, setPermissions] = useState<Permission[]>([])
+  const [nextofkin, setNextOfKin] = useState<NextOfKin>()
 
   // Loading states
-  const [isLoadingDepartments, setIsLoadingDepartments] = useState(false);
-  const [isLoadingEmploymentTypes, setIsLoadingEmploymentTypes] =
-    useState(false);
-  const [isLoadingPayrollClasses, setIsLoadingPayrollClasses] = useState(false);
-  const [isLoadingBanks, setIsLoadingBanks] = useState(false);
-  const [isLoadingPensions, setIsLoadingPensions] = useState(false);
-  const [isLoadingRoles, setIsLoadingRoles] = useState(false);
-  const [isLoadingPermissions, setIsLoadingPermissions] = useState(false);
+  const [isLoadingDepartments, setIsLoadingDepartments] = useState(false)
+  const [isLoadingEmploymentTypes, setIsLoadingEmploymentTypes] = useState(false)
+  const [isLoadingPayrollClasses, setIsLoadingPayrollClasses] = useState(false)
+  const [isLoadingBanks, setIsLoadingBanks] = useState(false)
+  const [isLoadingPensions, setIsLoadingPensions] = useState(false)
+  const [isLoadingRoles, setIsLoadingRoles] = useState(false)
+  const [isLoadingPermissions, setIsLoadingPermissions] = useState(false)
 
   // Error states
-  const [departmentsError, setDepartmentsError] = useState<string | null>(null);
-  const [employmentTypesError, setEmploymentTypesError] = useState<
-    string | null
-  >(null);
-  const [payrollClassesError, setPayrollClassesError] = useState<string | null>(
-    null
-  );
-  const [banksError, setBanksError] = useState<string | null>(null);
-  const [pensionsError, setPensionsError] = useState<string | null>(null);
-  const [rolesError, setRolesError] = useState<string | null>(null);
-  const [permissionsError, setPermissionsError] = useState<string | null>(null);
+  const [departmentsError, setDepartmentsError] = useState<string | null>(null)
+  const [employmentTypesError, setEmploymentTypesError] = useState<string | null>(null)
+  const [payrollClassesError, setPayrollClassesError] = useState<string | null>(null)
+  const [banksError, setBanksError] = useState<string | null>(null)
+  const [pensionsError, setPensionsError] = useState<string | null>(null)
+  const [rolesError, setRolesError] = useState<string | null>(null)
+  const [permissionsError, setPermissionsError] = useState<string | null>(null)
 
   // Default values for the form
   const defaultValues: Partial<EmployeeFormValues> = {
@@ -202,7 +150,6 @@ export function EmployeeAddForm() {
       state: "",
       country: "Nigeria",
       personal_email: "",
-      password: "",
       image_uri: "",
     },
     employmentInfo: {
@@ -229,178 +176,175 @@ export function EmployeeAddForm() {
         phone: "",
         email: "",
       },
+      password: "",
     },
-  };
+  }
 
   // Initialize the form
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeSchema),
     defaultValues,
     mode: "onChange",
-  });
+  })
 
   // Load data from local storage on component mount
   useEffect(() => {
-    const savedData = localStorage.getItem(EMPLOYEE_FORM_STORAGE_KEY);
+    const savedData = localStorage.getItem(EMPLOYEE_FORM_STORAGE_KEY)
     if (savedData) {
       try {
-        const parsedData = JSON.parse(savedData) as Partial<EmployeeFormValues>;
-        form.reset(parsedData);
+        const parsedData = JSON.parse(savedData) as Partial<EmployeeFormValues>
+        form.reset(parsedData)
       } catch (error) {
-        console.error("Error parsing saved form data:", error);
-        localStorage.removeItem(EMPLOYEE_FORM_STORAGE_KEY);
+        console.error("Error parsing saved form data:", error)
+        localStorage.removeItem(EMPLOYEE_FORM_STORAGE_KEY)
       }
     }
-  }, [form]);
+  }, [form])
 
   // Save form data to local storage when it changes
   useEffect(() => {
     const subscription = form.watch((value) => {
-      localStorage.setItem(EMPLOYEE_FORM_STORAGE_KEY, JSON.stringify(value));
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
+      localStorage.setItem(EMPLOYEE_FORM_STORAGE_KEY, JSON.stringify(value))
+    })
+    return () => subscription.unsubscribe()
+  }, [form])
 
   // Fetch departments
   useEffect(() => {
     const loadDepartments = async () => {
-      setIsLoadingDepartments(true);
-      setDepartmentsError(null);
+      setIsLoadingDepartments(true)
+      setDepartmentsError(null)
       try {
-        const data = await fetchDepartments();
-        setDepartments(data);
+        const data = await fetchDepartments()
+        setDepartments(data)
       } catch (error) {
-        console.error("Error loading departments:", error);
-        setDepartmentsError("Failed to load departments. Please try again.");
+        console.error("Error loading departments:", error)
+        setDepartmentsError("Failed to load departments. Please try again.")
       } finally {
-        setIsLoadingDepartments(false);
+        setIsLoadingDepartments(false)
       }
-    };
+    }
 
-    loadDepartments();
-  }, []);
+    loadDepartments()
+  }, [])
 
   // Fetch employment types
   useEffect(() => {
     const loadEmploymentTypes = async () => {
-      setIsLoadingEmploymentTypes(true);
-      setEmploymentTypesError(null);
+      setIsLoadingEmploymentTypes(true)
+      setEmploymentTypesError(null)
       try {
-        const data = await fetchEmploymentTypes();
-        setEmploymentTypes(data);
+        const data = await fetchEmploymentTypes()
+        setEmploymentTypes(data)
       } catch (error) {
-        console.error("Error loading employment types:", error);
-        setEmploymentTypesError(
-          "Failed to load employment types. Please try again."
-        );
+        console.error("Error loading employment types:", error)
+        setEmploymentTypesError("Failed to load employment types. Please try again.")
       } finally {
-        setIsLoadingEmploymentTypes(false);
+        setIsLoadingEmploymentTypes(false)
       }
-    };
+    }
 
-    loadEmploymentTypes();
-  }, []);
+    loadEmploymentTypes()
+  }, [])
 
   // Fetch payroll classes
   useEffect(() => {
     const loadPayrollClasses = async () => {
-      setIsLoadingPayrollClasses(true);
-      setPayrollClassesError(null);
+      setIsLoadingPayrollClasses(true)
+      setPayrollClassesError(null)
       try {
-        const data = await fetchPayrollClasses();
-        setPayrollClasses(data);
+        const data = await fetchPayrollClasses()
+        setPayrollClasses(data)
       } catch (error) {
-        console.error("Error loading payroll classes:", error);
-        setPayrollClassesError(
-          "Failed to load payroll classes. Please try again."
-        );
+        console.error("Error loading payroll classes:", error)
+        setPayrollClassesError("Failed to load payroll classes. Please try again.")
       } finally {
-        setIsLoadingPayrollClasses(false);
+        setIsLoadingPayrollClasses(false)
       }
-    };
+    }
 
-    loadPayrollClasses();
-  }, []);
+    loadPayrollClasses()
+  }, [])
 
   // Fetch banks
   useEffect(() => {
     const loadBanks = async () => {
-      setIsLoadingBanks(true);
-      setBanksError(null);
+      setIsLoadingBanks(true)
+      setBanksError(null)
       try {
-        const data = await fetchBanks();
-        setBanks(data);
+        const data = await fetchBanks()
+        setBanks(data)
       } catch (error) {
-        console.error("Error loading banks:", error);
-        setBanksError("Failed to load banks. Please try again.");
+        console.error("Error loading banks:", error)
+        setBanksError("Failed to load banks. Please try again.")
       } finally {
-        setIsLoadingBanks(false);
+        setIsLoadingBanks(false)
       }
-    };
+    }
 
-    loadBanks();
-  }, []);
+    loadBanks()
+  }, [])
 
   // Fetch pensions
   useEffect(() => {
     const loadPensions = async () => {
-      setIsLoadingPensions(true);
-      setPensionsError(null);
+      setIsLoadingPensions(true)
+      setPensionsError(null)
       try {
-        const data = await fetchPensions();
-        setPensions(data);
+        const data = await fetchPensions()
+        setPensions(data)
       } catch (error) {
-        console.error("Error loading pensions:", error);
-        setPensionsError("Failed to load pensions. Please try again.");
+        console.error("Error loading pensions:", error)
+        setPensionsError("Failed to load pensions. Please try again.")
       } finally {
-        setIsLoadingPensions(false);
+        setIsLoadingPensions(false)
       }
-    };
+    }
 
-    loadPensions();
-  }, []);
+    loadPensions()
+  }, [])
 
   // Fetch roles
   useEffect(() => {
     const loadRoles = async () => {
-      setIsLoadingRoles(true);
-      setRolesError(null);
+      setIsLoadingRoles(true)
+      setRolesError(null)
       try {
-        const data = await fetchRoles();
-        setRoles(data);
+        const data = await fetchRoles()
+        setRoles(data)
       } catch (error) {
-        console.error("Error loading roles:", error);
-        setRolesError("Failed to load roles. Please try again.");
+        console.error("Error loading roles:", error)
+        setRolesError("Failed to load roles. Please try again.")
       } finally {
-        setIsLoadingRoles(false);
+        setIsLoadingRoles(false)
       }
-    };
+    }
 
-    loadRoles();
-  }, []);
+    loadRoles()
+  }, [])
 
   // Fetch permissions
   useEffect(() => {
     const loadPermissions = async () => {
-      setIsLoadingPermissions(true);
-      setPermissionsError(null);
+      setIsLoadingPermissions(true)
+      setPermissionsError(null)
       try {
-        const data = await fetchPermissions();
-        setPermissions(data);
+        const data = await fetchPermissions()
+        setPermissions(data)
       } catch (error) {
-        console.error("Error loading permissions:", error);
-        setPermissionsError("Failed to load permissions. Please try again.");
+        console.error("Error loading permissions:", error)
+        setPermissionsError("Failed to load permissions. Please try again.")
       } finally {
-        setIsLoadingPermissions(false);
+        setIsLoadingPermissions(false)
       }
-    };
+    }
 
-    loadPermissions();
-  }, []);
+    loadPermissions()
+  }, [])
 
   // Handle form submission
   async function onSubmit(data: EmployeeFormValues) {
-    setIsSubmitting(true);
+    setIsSubmitting(true)
 
     try {
       // Prepare the payload according to the API requirements
@@ -418,7 +362,7 @@ export function EmployeeAddForm() {
         city: data.personalInfo.city,
         state: data.personalInfo.state,
         country: data.personalInfo.country,
-        next_of_kin: data.nextOfKinInfo.next_of_kin,
+        next_of_kin: data.nextOfKinInfo.next_of_kin || null,
         department_id: data.employmentInfo.department_id,
         personal_email: data.personalInfo.personal_email,
         employment_date: data.employmentInfo.employment_date,
@@ -430,148 +374,78 @@ export function EmployeeAddForm() {
         pension_id: data.compensationInfo.pension_id || null,
         pension_number: data.compensationInfo.pension_number || null,
         is_active: data.employmentInfo.is_active,
-        password: data.personalInfo.password,
+        password: data.nextOfKinInfo.password,
         user_role: data.employmentInfo.user_role,
         user_permissions: data.employmentInfo.user_permissions || [],
-      };
+      }
 
-      console.log("Submitting employee data:", payload);
+      console.log("Submitting employee data:", payload)
 
       // Call the API to create the employee
-      const response = await createEmployee(payload);
+      const response = await createEmployee(payload)
 
-      console.log("Employee created successfully:", response);
-
-      // Clear local storage
-      localStorage.removeItem(EMPLOYEE_FORM_STORAGE_KEY);
+      console.log("Employee created successfully:", response)
 
       // Show success toast
       toast({
         title: "Employee Added Successfully",
         description: `${response.first_name} ${response.last_name} has been added to the system with ID: ${response.id}`,
-      });
+      })
 
-      localStorage.removeItem("employee_add_form_data");
-      form.reset()
+      // Clear local storage
+      localStorage.removeItem(EMPLOYEE_FORM_STORAGE_KEY)
+
       // Redirect to employees page
-      router.push("/admin/employees");
+      router.push("/admin/employees")
     } catch (error) {
-      console.error("Error adding employee:", error);
+      console.error("Error adding employee:", error)
 
       // Show error toast
       toast({
         title: "Error Adding Employee",
-        description:
-          error instanceof Error
-            ? error.message
-            : "An unknown error occurred. Please try again.",
+        description: error instanceof Error ? error.message : "An unknown error occurred. Please try again.",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
   }
 
   // Handle tab navigation
   const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
+    setActiveTab(value)
+  }
 
   // Navigate to next tab
-  // const handleNext = async () => {
-  //   if (activeTab === "personal") {
-  //     const personalInfoValid = await form.trigger("personalInfo", {
-  //       shouldFocus: true,
-  //     });
-  //     if (personalInfoValid) {
-  //       setActiveTab("employment");
-  //     }
-  //   } else if (activeTab === "employment") {
-  //     const employmentInfoValid = await form.trigger("employmentInfo", {
-  //       shouldFocus: true,
-  //     });
-  //     if (employmentInfoValid) {
-  //       setActiveTab("compensation");
-  //     }
-  //   } else if (activeTab === "compensation") {
-  //     const compensationInfoValid = await form.trigger("compensationInfo", {
-  //       shouldFocus: true,
-  //     });
-  //     if (compensationInfoValid) {
-  //       setActiveTab("nextOfKin");
-  //     }
-  //   }
-  // };
-
-  const handleNext = async () => {
+  const handleNext = () => {
     if (activeTab === "personal") {
-      const personalInfoValid = await form.trigger("personalInfo", {
-        shouldFocus: true,
-      });
+      const personalInfoValid = form.trigger("personalInfo", { shouldFocus: true })
       if (personalInfoValid) {
-        setActiveTab("employment");
-      } else {
-        console.log("kjhg");
-        toast({
-          title: "Validation Error",
-          description:
-            "Please fill in all required fields in the Personal Information section.",
-          variant: "destructive",
-        });
+        setActiveTab("employment")
       }
     } else if (activeTab === "employment") {
-      const employmentInfoValid = await form.trigger("employmentInfo", {
-        shouldFocus: true,
-      });
+      const employmentInfoValid = form.trigger("employmentInfo", { shouldFocus: true })
       if (employmentInfoValid) {
-        setActiveTab("compensation");
-      } else {
-        toast({
-          title: "Validation Error",
-          description:
-            "Please fill in all required fields in the Employment Information section.",
-          variant: "destructive",
-        });
+        setActiveTab("compensation")
       }
     } else if (activeTab === "compensation") {
-      const compensationInfoValid = await form.trigger("compensationInfo", {
-        shouldFocus: true,
-      });
+      const compensationInfoValid = form.trigger("compensationInfo", { shouldFocus: true })
       if (compensationInfoValid) {
-        setActiveTab("nextOfKin");
-      } else {
-        toast({
-          title: "Validation Error",
-          description:
-            "Please fill in all required fields in the Compensation section.",
-          variant: "destructive",
-        });
-      }
-    } else if (activeTab === "nextOfKin") {
-      const nextOfKinInfoValid = await form.trigger("nextOfKinInfo", {
-        shouldFocus: true,
-      });
-
-      if (!nextOfKinInfoValid) {
-        toast({
-          title: "Validation Error",
-          description:
-            "Please fill in all required fields in the Compensation section.",
-          variant: "destructive",
-        });
+        setActiveTab("nextOfKin")
       }
     }
-  };
+  }
+
   // Navigate to previous tab
   const handlePrevious = () => {
     if (activeTab === "employment") {
-      setActiveTab("personal");
+      setActiveTab("personal")
     } else if (activeTab === "compensation") {
-      setActiveTab("employment");
+      setActiveTab("employment")
     } else if (activeTab === "nextOfKin") {
-      setActiveTab("compensation");
+      setActiveTab("compensation")
     }
-  };
+  }
 
   return (
     <Form {...form}>
@@ -580,31 +454,19 @@ export function EmployeeAddForm() {
           <CardContent className="p-6">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger
-                  value="personal"
-                  className="flex items-center gap-2"
-                >
+                <TabsTrigger value="personal" className="flex items-center gap-2">
                   <User className="h-4 w-4" />
                   <span className="hidden sm:inline">Personal Info</span>
                 </TabsTrigger>
-                <TabsTrigger
-                  value="employment"
-                  className="flex items-center gap-2"
-                >
+                <TabsTrigger value="employment" className="flex items-center gap-2">
                   <Briefcase className="h-4 w-4" />
                   <span className="hidden sm:inline">Employment</span>
                 </TabsTrigger>
-                <TabsTrigger
-                  value="compensation"
-                  className="flex items-center gap-2"
-                >
+                <TabsTrigger value="compensation" className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4" />
                   <span className="hidden sm:inline">Compensation</span>
                 </TabsTrigger>
-                <TabsTrigger
-                  value="nextOfKin"
-                  className="flex items-center gap-2"
-                >
+                <TabsTrigger value="nextOfKin" className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   <span className="hidden sm:inline">Next of Kin</span>
                 </TabsTrigger>
@@ -614,12 +476,8 @@ export function EmployeeAddForm() {
               <TabsContent value="personal" className="mt-6">
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-semibold">
-                      Personal Information
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      Enter the employee's basic personal details
-                    </p>
+                    <h2 className="text-xl font-semibold">Personal Information</h2>
+                    <p className="text-sm text-gray-500">Enter the employee's basic personal details</p>
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-3">
@@ -674,11 +532,7 @@ export function EmployeeAddForm() {
                         <FormItem>
                           <FormLabel>Work Email</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="john.doe@example.com"
-                              type="email"
-                              {...field}
-                            />
+                            <Input placeholder="john.doe@example.com" type="email" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -692,11 +546,7 @@ export function EmployeeAddForm() {
                         <FormItem>
                           <FormLabel>Personal Email</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="john.doe@gmail.com"
-                              type="email"
-                              {...field}
-                            />
+                            <Input placeholder="john.doe@gmail.com" type="email" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -743,10 +593,7 @@ export function EmployeeAddForm() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Gender</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select gender" />
@@ -770,10 +617,7 @@ export function EmployeeAddForm() {
                       <FormItem>
                         <FormLabel>Address (Optional)</FormLabel>
                         <FormControl>
-                          <Textarea
-                            placeholder="123 Main St, Apt 4B"
-                            {...field}
-                          />
+                          <Textarea placeholder="123 Main St, Apt 4B" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -831,43 +675,13 @@ export function EmployeeAddForm() {
                       <FormItem>
                         <FormLabel>Profile Image URL (Optional)</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="https://example.com/profile.jpg"
-                            {...field}
-                          />
+                          <Input placeholder="https://example.com/profile.jpg" {...field} />
                         </FormControl>
-                        <FormDescription>
-                          Enter a URL for the employee's profile image
-                        </FormDescription>
+                        <FormDescription>Enter a URL for the employee's profile image</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  <div className="border-t pt-4">
-                    <h3 className="text-md font-medium mb-4">Account Setup</h3>
-                    <FormField
-                      control={form.control}
-                      name="personalInfo.password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Initial Password</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="password"
-                              placeholder="••••••••"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            The employee will be prompted to change this
-                            password on first login
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
                 </div>
               </TabsContent>
 
@@ -875,12 +689,8 @@ export function EmployeeAddForm() {
               <TabsContent value="employment" className="mt-6">
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-semibold">
-                      Employment Information
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      Enter the employee's job and position details
-                    </p>
+                    <h2 className="text-xl font-semibold">Employment Information</h2>
+                    <p className="text-sm text-gray-500">Enter the employee's job and position details</p>
                   </div>
 
                   <FormField
@@ -890,10 +700,7 @@ export function EmployeeAddForm() {
                       <FormItem>
                         <FormLabel>Job Title</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Senior Travel Consultant"
-                            {...field}
-                          />
+                          <Input placeholder="Senior Travel Consultant" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -907,10 +714,7 @@ export function EmployeeAddForm() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Department</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select department" />
@@ -949,10 +753,7 @@ export function EmployeeAddForm() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Employment Type</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select type" />
@@ -1009,17 +810,11 @@ export function EmployeeAddForm() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                         <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
+                          <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel>Active Employee</FormLabel>
-                          <FormDescription>
-                            Is this employee currently active in the
-                            organization?
-                          </FormDescription>
+                          <FormDescription>Is this employee currently active in the organization?</FormDescription>
                         </div>
                       </FormItem>
                     )}
@@ -1031,10 +826,7 @@ export function EmployeeAddForm() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Role</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select role" />
@@ -1073,25 +865,15 @@ export function EmployeeAddForm() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="mb-4">
-                          <FormLabel className="text-base">
-                            Permissions
-                          </FormLabel>
-                          <FormDescription>
-                            Select the permissions this employee will have
-                          </FormDescription>
+                          <FormLabel className="text-base">Permissions</FormLabel>
+                          <FormDescription>Select the permissions this employee will have</FormDescription>
                         </div>
                         {isLoadingPermissions ? (
-                          <div className="text-sm text-gray-500">
-                            Loading permissions...
-                          </div>
+                          <div className="text-sm text-gray-500">Loading permissions...</div>
                         ) : permissionsError ? (
-                          <div className="text-sm text-red-500">
-                            Error: {permissionsError}
-                          </div>
+                          <div className="text-sm text-red-500">Error: {permissionsError}</div>
                         ) : permissions.length === 0 ? (
-                          <div className="text-sm text-gray-500">
-                            No permissions available
-                          </div>
+                          <div className="text-sm text-gray-500">No permissions available</div>
                         ) : (
                           <div className="grid gap-2 sm:grid-cols-2">
                             {permissions.map((permission) => (
@@ -1107,29 +889,17 @@ export function EmployeeAddForm() {
                                     >
                                       <FormControl>
                                         <Checkbox
-                                          checked={field.value?.includes(
-                                            permission.name
-                                          )}
+                                          checked={field.value?.includes(permission.name)}
                                           onCheckedChange={(checked) => {
                                             return checked
-                                              ? field.onChange([
-                                                  ...(field.value || []),
-                                                  permission.name,
-                                                ])
-                                              : field.onChange(
-                                                  field.value?.filter(
-                                                    (value) =>
-                                                      value !== permission.name
-                                                  )
-                                                );
+                                              ? field.onChange([...(field.value || []), permission.name])
+                                              : field.onChange(field.value?.filter((value) => value !== permission.name))
                                           }}
                                         />
                                       </FormControl>
-                                      <FormLabel className="font-normal">
-                                        {permission.name}
-                                      </FormLabel>
+                                      <FormLabel className="font-normal">{permission.name}</FormLabel>
                                     </FormItem>
-                                  );
+                                  )
                                 }}
                               />
                             ))}
@@ -1147,12 +917,8 @@ export function EmployeeAddForm() {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-xl font-semibold">
-                        Compensation & Benefits
-                      </h2>
-                      <p className="text-sm text-gray-500">
-                        Enter the employee's salary and benefits information
-                      </p>
+                      <h2 className="text-xl font-semibold">Compensation & Benefits</h2>
+                      <p className="text-sm text-gray-500">Enter the employee's salary and benefits information</p>
                     </div>
                     <TooltipProvider>
                       <Tooltip>
@@ -1163,8 +929,7 @@ export function EmployeeAddForm() {
                         </TooltipTrigger>
                         <TooltipContent>
                           <p className="max-w-xs">
-                            This information is confidential and only accessible
-                            to HR and Finance departments
+                            This information is confidential and only accessible to HR and Finance departments
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -1177,10 +942,7 @@ export function EmployeeAddForm() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Payroll Class</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select payroll class" />
@@ -1201,12 +963,8 @@ export function EmployeeAddForm() {
                               </SelectItem>
                             ) : (
                               payrollClasses.map((payrollClass) => (
-                                <SelectItem
-                                  key={payrollClass.id}
-                                  value={payrollClass.id}
-                                >
-                                  {payrollClass.name} - ₦
-                                  {payrollClass.basic_pay.toLocaleString()}
+                                <SelectItem key={payrollClass.id} value={payrollClass.id}>
+                                  {payrollClass.name} - ₦{payrollClass.basic_pay.toLocaleString()}
                                 </SelectItem>
                               ))
                             )}
@@ -1218,9 +976,7 @@ export function EmployeeAddForm() {
                   />
 
                   <div className="border-t pt-4">
-                    <h3 className="text-md font-medium mb-4">
-                      Banking Information
-                    </h3>
+                    <h3 className="text-md font-medium mb-4">Banking Information</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <FormField
                         control={form.control}
@@ -1228,10 +984,7 @@ export function EmployeeAddForm() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Bank</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select bank" />
@@ -1287,10 +1040,7 @@ export function EmployeeAddForm() {
                       <FormItem>
                         <FormLabel>Tax Number (Optional)</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Tax Identification Number"
-                            {...field}
-                          />
+                          <Input placeholder="Tax Identification Number" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -1298,9 +1048,7 @@ export function EmployeeAddForm() {
                   />
 
                   <div className="border-t pt-4">
-                    <h3 className="text-md font-medium mb-4">
-                      Pension Information
-                    </h3>
+                    <h3 className="text-md font-medium mb-4">Pension Information</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <FormField
                         control={form.control}
@@ -1308,10 +1056,7 @@ export function EmployeeAddForm() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Pension Provider (Optional)</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select pension provider" />
@@ -1332,10 +1077,7 @@ export function EmployeeAddForm() {
                                   </SelectItem>
                                 ) : (
                                   pensions.map((pension) => (
-                                    <SelectItem
-                                      key={pension.id}
-                                      value={pension.id}
-                                    >
+                                    <SelectItem key={pension.id} value={pension.id}>
                                       {pension.name}
                                     </SelectItem>
                                   ))
@@ -1369,19 +1111,14 @@ export function EmployeeAddForm() {
               <TabsContent value="nextOfKin" className="mt-6">
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-semibold">
-                      Next of Kin & Account Setup
-                    </h2>
+                    <h2 className="text-xl font-semibold">Next of Kin & Account Setup</h2>
                     <p className="text-sm text-gray-500">
-                      Enter emergency contact information and set up the
-                      employee's account
+                      Enter emergency contact information and set up the employee's account
                     </p>
                   </div>
 
                   <div className="border rounded-md p-4">
-                    <h3 className="text-md font-medium mb-4">
-                      Next of Kin Information
-                    </h3>
+                    <h3 className="text-md font-medium mb-4">Next of Kin Information</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <FormField
                         control={form.control}
@@ -1404,10 +1141,7 @@ export function EmployeeAddForm() {
                           <FormItem>
                             <FormLabel>Relationship</FormLabel>
                             <FormControl>
-                              <Input
-                                placeholder="Spouse, Parent, etc."
-                                {...field}
-                              />
+                              <Input placeholder="Spouse, Parent, etc." {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1423,10 +1157,7 @@ export function EmployeeAddForm() {
                           <FormItem>
                             <FormLabel>Phone Number</FormLabel>
                             <FormControl>
-                              <Input
-                                placeholder="+234 800 987 6543"
-                                {...field}
-                              />
+                              <Input placeholder="+234 800 987 6543" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1440,17 +1171,33 @@ export function EmployeeAddForm() {
                           <FormItem>
                             <FormLabel>Email (Optional)</FormLabel>
                             <FormControl>
-                              <Input
-                                placeholder="jane.doe@example.com"
-                                type="email"
-                                {...field}
-                              />
+                              <Input placeholder="jane.doe@example.com" type="email" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
+                  </div>
+
+                  <div className="border-t pt-4">
+                    <h3 className="text-md font-medium mb-4">Account Setup</h3>
+                    <FormField
+                      control={form.control}
+                      name="nextOfKinInfo.password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Initial Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="••••••••" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            The employee will be prompted to change this password on first login
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </div>
               </TabsContent>
@@ -1467,19 +1214,11 @@ export function EmployeeAddForm() {
               </Button>
 
               {activeTab !== "nextOfKin" ? (
-                <Button
-                  type="button"
-                  onClick={handleNext}
-                  disabled={isSubmitting}
-                >
+                <Button type="button" onClick={handleNext} disabled={isSubmitting}>
                   Next
                 </Button>
               ) : (
-                <Button
-                  type="submit"
-                  className="bg-teal-600 hover:bg-teal-700"
-                  disabled={isSubmitting}
-                >
+                <Button type="submit" className="bg-teal-600 hover:bg-teal-700" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1495,5 +1234,5 @@ export function EmployeeAddForm() {
         </Card>
       </form>
     </Form>
-  );
+  )
 }

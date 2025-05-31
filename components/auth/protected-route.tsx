@@ -11,9 +11,9 @@ interface ProtectedRouteProps {
   requiredRole?:
     | "super_admin"
     | "employee"
-    | "admin"
-    | "department_admin"
-    | "hr_admin";
+    | "intern"
+    | "department_lead"
+    | "hr" | "manager";
 }
 
 export function ProtectedRoute({
@@ -45,24 +45,14 @@ export function ProtectedRoute({
 
     // If role is required and user doesn't have it, redirect to appropriate dashboard
     if (
-      requiredRole &&
-      user?.roles &&
-      user.roles.some(
-        (role) =>
-          // ["super_admin", "department_admin", "admin"].includes(role.name)
-          role.name !== requiredRole
-      )
+      requiredRole && user &&
+      user.role.name === requiredRole
     ) {
-      const redirectPath = user.roles.some(
-        (role) =>
-          // ["super_admin", "department_admin", "admin"].includes(role.name)
-          role.name === "super_admin" ||
-          role.name === "department_admin" ||
-          role.name === "admin"
-      )
+      const redirectPath = user.role.name === "super_admin" || user.role.name === "hr" || user.role.name === "manager"
         ? "/admin/dashboard"
         : "/employee/dashboard";
-      router.push("/admin/dashboard");
+        
+      router.push(redirectPath);
     }
   }, [
     isAuthenticated,

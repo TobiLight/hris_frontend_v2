@@ -17,161 +17,24 @@ import { Badge } from "@/components/ui/badge"
 import { MoreVertical, Search, Edit, Trash2, Eye, Mail } from "lucide-react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { fetchDepartmentById, type Department } from "@/lib/api/department-service"
 
 // Sample department data
-const departmentData = {
-  1: {
-    id: 1,
-    name: "Travel Services",
-    employees: [
-      {
-        id: 101,
-        name: "Jennifer Parker",
-        position: "Department Manager",
-        email: "jennifer.parker@btms.com",
-        phone: "+1 (212) 555-1001",
-        status: "Active",
-        avatar: "/placeholder.svg",
-        joinDate: "2020-03-15",
-      },
-      {
-        id: 102,
-        name: "Michael Scott",
-        position: "Senior Travel Agent",
-        email: "michael.scott@btms.com",
-        phone: "+1 (212) 555-1002",
-        status: "Active",
-        avatar: "/placeholder.svg",
-        joinDate: "2020-04-10",
-      },
-      {
-        id: 103,
-        name: "Pam Beesly",
-        position: "Travel Agent",
-        email: "pam.beesly@btms.com",
-        phone: "+1 (212) 555-1003",
-        status: "Active",
-        avatar: "/placeholder.svg",
-        joinDate: "2020-05-20",
-      },
-      {
-        id: 104,
-        name: "Jim Halpert",
-        position: "Travel Agent",
-        email: "jim.halpert@btms.com",
-        phone: "+1 (212) 555-1004",
-        status: "Active",
-        avatar: "/placeholder.svg",
-        joinDate: "2020-05-25",
-      },
-      {
-        id: 105,
-        name: "Dwight Schrute",
-        position: "Corporate Travel Specialist",
-        email: "dwight.schrute@btms.com",
-        phone: "+1 (212) 555-1005",
-        status: "Active",
-        avatar: "/placeholder.svg",
-        joinDate: "2020-06-15",
-      },
-      {
-        id: 106,
-        name: "Angela Martin",
-        position: "Travel Accountant",
-        email: "angela.martin@btms.com",
-        phone: "+1 (212) 555-1006",
-        status: "Active",
-        avatar: "/placeholder.svg",
-        joinDate: "2020-07-10",
-      },
-      {
-        id: 107,
-        name: "Kevin Malone",
-        position: "Travel Support",
-        email: "kevin.malone@btms.com",
-        phone: "+1 (212) 555-1007",
-        status: "On Leave",
-        avatar: "/placeholder.svg",
-        joinDate: "2020-08-05",
-      },
-    ],
-  },
-  2: {
-    id: 2,
-    name: "Operations",
-    employees: [
-      {
-        id: 201,
-        name: "Michael Rodriguez",
-        position: "Operations Manager",
-        email: "michael.rodriguez@btms.com",
-        phone: "+1 (212) 555-2001",
-        status: "Active",
-        avatar: "/placeholder.svg",
-        joinDate: "2020-03-10",
-      },
-      {
-        id: 202,
-        name: "Sarah Williams",
-        position: "Operations Supervisor",
-        email: "sarah.williams@btms.com",
-        phone: "+1 (212) 555-2002",
-        status: "Active",
-        avatar: "/placeholder.svg",
-        joinDate: "2020-04-15",
-      },
-      {
-        id: 203,
-        name: "Robert Johnson",
-        position: "Quality Control Specialist",
-        email: "robert.johnson@btms.com",
-        phone: "+1 (212) 555-2003",
-        status: "Active",
-        avatar: "/placeholder.svg",
-        joinDate: "2020-05-10",
-      },
-      {
-        id: 204,
-        name: "Emily Davis",
-        position: "Process Improvement Analyst",
-        email: "emily.davis@btms.com",
-        phone: "+1 (212) 555-2004",
-        status: "Active",
-        avatar: "/placeholder.svg",
-        joinDate: "2020-06-20",
-      },
-      {
-        id: 205,
-        name: "David Wilson",
-        position: "Operations Analyst",
-        email: "david.wilson@btms.com",
-        phone: "+1 (212) 555-2005",
-        status: "Inactive",
-        avatar: "/placeholder.svg",
-        joinDate: "2020-07-15",
-      },
-    ],
-  },
-  // Add more departments as needed
-}
 
 export function DepartmentEmployees({ id }: { id: string }) {
-  const [department, setDepartment] = useState<any>(null)
+  const [department, setDepartment] = useState<Department | undefined>()
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(() => {
-    // Simulate API call
-    const fetchDepartment = async () => {
-      setLoading(true)
-      // In a real app, this would be an API call
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      setDepartment(departmentData[id as keyof typeof departmentData] || departmentData[1])
-      setLoading(false)
-    }
-
-    fetchDepartment()
-  }, [id])
+      async function getDepartment() {
+        const data = await fetchDepartmentById(id);
+        setDepartment(data);
+        setLoading(false);
+      }
+  
+      getDepartment();
+    }, [id]);
 
   if (loading) {
     return (
@@ -189,10 +52,11 @@ export function DepartmentEmployees({ id }: { id: string }) {
     )
   }
 
-  const filteredEmployees = department.employees.filter(
-    (employee: any) =>
-      employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredEmployees = department.team_members.filter(
+    (employee) =>
+      employee.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee.role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       employee.email.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
@@ -202,7 +66,7 @@ export function DepartmentEmployees({ id }: { id: string }) {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <CardTitle>Employees in {department.name}</CardTitle>
-            <CardDescription>Total: {department.employees.length} employees</CardDescription>
+            <CardDescription>Total: {department.team_members.length} employees</CardDescription>
           </div>
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />

@@ -49,10 +49,6 @@ export default function EmployeesPage() {
     loadEmployees();
   }, [filters]);
 
-  // Debug output
-  useEffect(() => {
-    console.log("Current employees state:", employees);
-  }, [employees]);
 
   return (
     <div className="flex flex-col">

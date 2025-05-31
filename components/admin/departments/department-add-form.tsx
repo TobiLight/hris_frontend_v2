@@ -12,11 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useRouter } from "next/navigation"
-import { toast } from "@/components/ui/use-toast"
 import { createDepartment } from "@/lib/api/department-service"
 import { fetchEmployees } from "@/lib/api/employee-service"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle, Loader2 } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
+
 
 // Form schema
 const formSchema = z.object({
@@ -35,7 +36,7 @@ type FormValues = z.infer<typeof formSchema>
 export function DepartmentAddForm() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [managers, setManagers] = useState<{ id: string; name: string; job_title: string }[]>([])
+  const [managers, setManagers] = useState<{ id?: string; name: string; job_title: string }[]>([])
   const [isLoadingManagers, setIsLoadingManagers] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -45,6 +46,7 @@ export function DepartmentAddForm() {
     defaultValues: {
       name: "",
       description: "",
+      team_lead_id: ""
     },
   })
 
@@ -60,9 +62,9 @@ export function DepartmentAddForm() {
 
         // Filter employees to only include those with the department_lead role
         const departmentLeads = employees.filter((employee) =>
-          employee.role.toLowerCase() === "department_lead" ||
-              employee.role.toLowerCase() === "admin" ||
-              employee.role.toLowerCase() === "manager"
+          employee.role.name.toLowerCase() === "department_lead" ||
+              employee.role.name.toLowerCase() === "admin" ||
+              employee.role.name.toLowerCase() === "manager"
         )
 
         console.log(`Found ${departmentLeads.length} department leads out of ${employees.length} employees`)
@@ -119,6 +121,11 @@ export function DepartmentAddForm() {
       router.push("/admin/departments")
     } catch (err: any) {
       console.error("Error creating department:", err)
+      toast({
+        title: "Department created",
+        description: `Failed to create department. Please try again.`,
+        variant: "destructive"
+      })
       setError(err.message || "Failed to create department. Please try again.")
     } finally {
       setIsSubmitting(false)
@@ -184,7 +191,7 @@ export function DepartmentAddForm() {
                                 </div>
                               ) : managers.length > 0 ? (
                                 managers.map((manager) => (
-                                  <SelectItem key={manager.id} value={manager.id}>
+                                  <SelectItem key={manager.id} value={manager.id as string}>
                                     {manager.name} - {manager.job_title}
                                   </SelectItem>
                                 ))
