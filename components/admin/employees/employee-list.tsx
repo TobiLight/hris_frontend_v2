@@ -30,18 +30,34 @@ import {
   Calendar,
   Search,
   Building,
+  UserX,
 } from "lucide-react";
 import Link from "next/link";
 import { useEmployeeContext } from "./employee-context";
 import { format } from "date-fns";
-import type { Employee } from "@/lib/api/employee-service";
+import { deleteEmployee, type Employee } from "@/lib/api/employee-service";
+import { toast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useRouter } from "next/navigation";
 
 interface EmployeeListProps {
   employees: Employee[];
+  handleDeleteEmployee: (employee: Employee) => void
 }
 
-export function EmployeeList({ employees }: EmployeeListProps) {
+export function EmployeeList({ employees, handleDeleteEmployee }: EmployeeListProps) {
   const { viewType } = useEmployeeContext();
+  const router = useRouter();
 
   console.log("EmployeeList rendering with employees:", employees);
 
@@ -101,15 +117,15 @@ export function EmployeeList({ employees }: EmployeeListProps) {
                   <div className="flex items-center gap-3">
                     <Avatar>
                       {employee.image_uri && employee.image_uri.length ? (
-                      <AvatarImage
-                        src={employee.image_uri || "/placeholder.svg"}
-                        alt={`${employee.first_name} ${employee.last_name}`}
-                      />
-                    ) : (
-                      <AvatarFallback className="bg-teal-100 text-teal-800 text-lg">
-                        {getInitials(employee.first_name, employee.last_name)}
-                      </AvatarFallback>
-                    )}
+                        <AvatarImage
+                          src={employee.image_uri || "/placeholder.svg"}
+                          alt={`${employee.first_name} ${employee.last_name}`}
+                        />
+                      ) : (
+                        <AvatarFallback className="bg-teal-100 text-teal-800 text-lg">
+                          {getInitials(employee.first_name, employee.last_name)}
+                        </AvatarFallback>
+                      )}
                     </Avatar>
                     <div>
                       <div className="font-medium">{`${employee.first_name} ${employee.last_name}`}</div>
@@ -152,10 +168,45 @@ export function EmployeeList({ employees }: EmployeeListProps) {
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-red-600">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
+                      {/* <DropdownMenuItem className="text-red-600">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => deleteUser(employee)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </Button>
+                      </DropdownMenuItem> */}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem
+                            onSelect={(e) => e.preventDefault()}
+                            className="text-red-600"
+                          >
+                            <UserX className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Employee</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this employee?
+                              This action is irreversible.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteEmployee(employee)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

@@ -10,10 +10,13 @@ import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Employee, fetchEmployees } from "@/lib/api/employee-service";
+import { deleteEmployee, Employee, fetchEmployees } from "@/lib/api/employee-service";
 import { AdminDashboardHeader } from "@/components/admin/dashboard-header";
+import { toast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 export default function EmployeesPage() {
+  const router = useRouter()
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +47,43 @@ export default function EmployeesPage() {
       setLoading(false);
     }
   };
+
+   const handleDeleteEmployee = (employee: Employee) => {
+      async function deleteUser() {
+        try {
+          let user = await deleteEmployee(employee.id as string);
+          if (user) {
+            toast({
+              title: "Employee deleted",
+              description: `${employee.first_name} ${employee.last_name}'s data has been deleted successfully`,
+            });
+            router.refresh();
+            return;
+          }
+          toast({
+            title: "Can't perform action",
+            description: `User has been deleted or does not exist`,
+            variant: "destructive",
+          });
+        } catch (error) {
+          console.error("Error updating employee:", error);
+          toast({
+            title: "Error updating Employee data",
+            description:
+              error instanceof Error
+                ? error.message
+                : "An unknown error occurred. Please try again.",
+            variant: "destructive",
+          });
+        } finally {
+            router.refresh();
+          router.push("/admin/employees");
+          // window.location.replace("/admin/employees")
+        }
+      }
+      deleteUser();
+    };
+  
 
   useEffect(() => {
     loadEmployees();
@@ -107,7 +147,7 @@ export default function EmployeesPage() {
                 ))}
               </div>
             ) : (
-              <EmployeeList employees={employees} />
+              <EmployeeList employees={employees} handleDeleteEmployee={handleDeleteEmployee} />
             )}
           </div>
         </EmployeeProvider>

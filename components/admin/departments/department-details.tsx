@@ -55,7 +55,6 @@ export function DepartmentDetails({ id }: { id: string }) {
     getDepartment();
   }, [id]);
 
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -102,7 +101,7 @@ export function DepartmentDetails({ id }: { id: string }) {
                       <p className="font-medium">Department Manager</p>
                       <div className="flex items-center mt-1">
                         <Avatar className="h-8 w-8 mr-2">
-                          {department.team_lead.image_uri ? (
+                          {department.team_lead?.image_uri ? (
                             <AvatarImage
                               src={
                                 department.team_lead.image_uri ??
@@ -112,20 +111,27 @@ export function DepartmentDetails({ id }: { id: string }) {
                             />
                           ) : (
                             <AvatarFallback>
-                              {getInitials(
-                                `${department.team_lead.first_name} ${department.team_lead.last_name}`,
-                                2
-                              )}
+                              {department.team_lead
+                                ? getInitials(
+                                    `${department.team_lead.first_name} ${department.team_lead.last_name}`,
+                                    2
+                                  )
+                                : null}
                             </AvatarFallback>
                           )}
                         </Avatar>
                         <div>
                           <p className="text-sm font-medium">
-                            {department.team_lead.first_name}{" "}
-                            {department.team_lead.last_name}
+                            {department.team_lead
+                              ? department.team_lead.first_name +
+                                " " +
+                                department.team_lead.last_name
+                              : "Not yet appointed"}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {department.team_lead.email}
+                            {department.team_lead
+                              ? department.team_lead.email
+                              : null}
                           </p>
                         </div>
                       </div>
@@ -156,7 +162,9 @@ export function DepartmentDetails({ id }: { id: string }) {
                   <div>
                     <p className="font-medium">Headcount</p>
                     <p className="text-gray-600">
-                      {department.team_members.length} employees
+                      {department.team_members.length < 2
+                        ? `${department.team_members.length} employee`
+                        : `${department.team_members.length} employees`}
                     </p>
                   </div>
                 </div>
@@ -305,17 +313,18 @@ export function DepartmentDetails({ id }: { id: string }) {
                 <div className="p-4 border rounded-lg bg-gray-50">
                   <div className="flex items-center mb-4">
                     <Avatar className="h-10 w-10 mr-3">
-                      {department.team_lead.image_uri ? (
+                      {department?.team_lead?.image_uri !== null ? (
                         <AvatarImage
                           src={
-                            department.team_lead.image_uri ?? "/placeholder.svg"
+                            department?.team_lead?.image_uri ??
+                            "/placeholder.svg"
                           }
-                          alt={department.team_lead.first_name}
+                          alt={department?.team_lead?.first_name}
                         />
                       ) : (
                         <AvatarFallback>
                           {getInitials(
-                            `${department.team_lead.first_name} ${department.team_lead.last_name}`,
+                            `${department?.team_lead?.first_name} ${department?.team_lead?.last_name}`,
                             2
                           )}
                         </AvatarFallback>
@@ -323,8 +332,8 @@ export function DepartmentDetails({ id }: { id: string }) {
                     </Avatar>
                     <div>
                       <p className="font-medium">
-                        {department.team_lead.first_name}{" "}
-                        {department.team_lead.last_name}
+                        {department?.team_lead?.first_name}{" "}
+                        {department?.team_lead?.last_name}
                       </p>
                       <p className="text-sm text-gray-500">
                         Department Manager

@@ -103,7 +103,7 @@ const employmentInfoSchema = z.object({
   employment_date: z
     .string()
     .min(1, { message: "Employment date is required" }),
-  is_active: z.boolean().default(true),
+  is_active: z.boolean(),
   user_role: z.string().min(1, { message: "Role is required" }),
   user_permissions: z.array(z.string()).optional(),
 });
@@ -477,31 +477,6 @@ export function EmployeeAddForm() {
     setActiveTab(value);
   };
 
-  // Navigate to next tab
-  // const handleNext = async () => {
-  //   if (activeTab === "personal") {
-  //     const personalInfoValid = await form.trigger("personalInfo", {
-  //       shouldFocus: true,
-  //     });
-  //     if (personalInfoValid) {
-  //       setActiveTab("employment");
-  //     }
-  //   } else if (activeTab === "employment") {
-  //     const employmentInfoValid = await form.trigger("employmentInfo", {
-  //       shouldFocus: true,
-  //     });
-  //     if (employmentInfoValid) {
-  //       setActiveTab("compensation");
-  //     }
-  //   } else if (activeTab === "compensation") {
-  //     const compensationInfoValid = await form.trigger("compensationInfo", {
-  //       shouldFocus: true,
-  //     });
-  //     if (compensationInfoValid) {
-  //       setActiveTab("nextOfKin");
-  //     }
-  //   }
-  // };
 
   const handleNext = async () => {
     if (activeTab === "personal") {
@@ -511,7 +486,6 @@ export function EmployeeAddForm() {
       if (personalInfoValid) {
         setActiveTab("employment");
       } else {
-        console.log("kjhg");
         toast({
           title: "Validation Error",
           description:

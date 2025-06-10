@@ -59,6 +59,7 @@ export function DepartmentAddForm() {
 
         // Fetch all employees
         const employees = await fetchEmployees()
+        console.log("employees", employees)
 
         // Filter employees to only include those with the department_lead role
         const departmentLeads = employees.filter((employee) =>

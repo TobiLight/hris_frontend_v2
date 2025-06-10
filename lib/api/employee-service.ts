@@ -7,9 +7,9 @@ export interface NextOfKin {
   updated_at?: string;
   name: string;
   phone: string;
-  email?: string;
+  email?: string | null;
   relationship: string;
-  user_id?: string;
+  user_id?: string | null;
 }
 
 export interface Department {
@@ -213,8 +213,8 @@ export async function updateEmployee(
   employeeData: Partial<Employee>
 ): Promise<Employee> {
   try {
-    const employee = await apiRequest<Employee>(`/employees/${id}`, {
-      method: "PUT",
+    const employee = await apiRequest<Employee>(`/admin/employee/${id}/edit`, {
+      method: "PATCH",
       body: JSON.stringify(employeeData),
     });
     return employee;
@@ -227,9 +227,9 @@ export async function updateEmployee(
 /**
  * Delete an employee
  */
-export async function deleteEmployee(id: string): Promise<void> {
+export async function deleteEmployee(id: string): Promise<boolean> {
   try {
-    await apiRequest(`/admin/employee/${id}/delete`, {
+    return await apiRequest<boolean>(`/admin/employee/${id}/delete`, {
       method: "DELETE",
     });
   } catch (error) {
@@ -239,13 +239,32 @@ export async function deleteEmployee(id: string): Promise<void> {
 }
 
 /**
- * Deactivate an employee profile
+ * Activate an employee profile
  */
-export async function deactivateEmployee(id: string): Promise<void> {
+export async function activateEmployee(id: string): Promise<Employee> {
   try {
-    await apiRequest(`/admin/employee/${id}/deactivate`, {
+    const user = await apiRequest<Employee>(`/admin/employee/${id}/activate`, {
       method: "POST",
     });
+
+    return user
+  } catch (error) {
+    console.error(`Error deactivating employee with ID ${id}:`, error);
+    throw error;
+  }
+}
+
+
+/**
+ * Deactivate an employee profile
+ */
+export async function deactivateEmployee(id: string): Promise<Employee> {
+  try {
+    const user = await apiRequest<Employee>(`/admin/employee/${id}/deactivate`, {
+      method: "POST",
+    });
+
+    return user
   } catch (error) {
     console.error(`Error deactivating employee with ID ${id}:`, error);
     throw error;
@@ -344,3 +363,4 @@ export async function fetchPermissions(): Promise<Permission[]> {
     throw error;
   }
 }
+

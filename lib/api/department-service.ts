@@ -213,8 +213,8 @@ export async function updateDepartment(
   departmentData: Partial<Department>
 ): Promise<Department> {
   try {
-    const department = await apiRequest<Department>(`/departments/${id}`, {
-      method: "PUT",
+    const department = await apiRequest<Department>(`/department/${id}/edit`, {
+      method: "PATCH",
       body: JSON.stringify(departmentData),
     });
     return department;
