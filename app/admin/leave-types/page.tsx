@@ -24,9 +24,9 @@ export default function LeaveTypesPage() {
             className="mt-4 bg-teal-600 hover:bg-teal-700 sm:mt-0"
             asChild
           >
-            <Link href="/admin/payroll-classes/add">
+            <Link href="/admin/leave-types/add">
               <PlusCircle className="mr-2 h-4 w-4" />
-              Add Payroll Class
+              Add Leave Type
             </Link>
           </Button>
         </div>
