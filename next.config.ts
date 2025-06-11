@@ -19,9 +19,12 @@ const nextConfig = {
   },
   env: {
     API_BASE_URL: process.env.NODE_ENV === 'production' 
-      ? 'http://51.38.75.84/api' 
-      : 'http://localhost:8000/api/'
-  }
+      ? 'http://127.0.0.1:8000'  // Internal communication
+      : 'http://localhost:8000'
+  },
+  // Configure for production
+  poweredByHeader: false,
+  compress: true,
   // reactStrictMode: true,
 }
 

@@ -1,25 +1,40 @@
-import {  apiRequest } from "./api-client"
+import { get, post, put, del, apiRequest } from "./api-client"
 
 export interface LeaveType {
   id: string
   created_at: string
   updated_at: string
   name: string
-  description: string
-  default_days: number
-  is_paid: boolean
-  requires_approval: boolean
+  description?: string
+  outstanding_days?: number
+  start_date?: string
+  end_date?: string
+  resumption_date?: string
+  relieving_staff_id?: string
+  supervisor_id?: string
+  address_during_leave?: string
+  contact_phone?: string
+  handover_document_url?: string
+  default_days?: number
+  is_paid?: boolean
+  requires_approval?: boolean
 }
 
 export interface CreateLeaveTypeDto {
-  name: string
-  description: string
-  default_days: number
-  is_paid: boolean
-  requires_approval: boolean
+  leave_type: string
+  description?: string
+  outstanding_days: number
+  start_date: string
+  end_date: string
+  resumption_date: string
+  relieving_staff_id: string
+  supervisor_id?: string
+  address_during_leave: string
+  contact_phone: string
+  handover_document?: File
 }
 
-export interface UpdateLeaveTypeDto extends CreateLeaveTypeDto {
+export interface UpdateLeaveTypeDto extends Partial<CreateLeaveTypeDto> {
   id: string
 }
 
@@ -50,33 +65,33 @@ export async function getLeaveTypeById(id: string): Promise<LeaveType> {
 }
 
 /**
- * Creates a new leave type
+ * Creates a new leave request
  */
-export async function createLeaveType(data: CreateLeaveTypeDto): Promise<LeaveType> {
+export async function createLeaveType(data: FormData | CreateLeaveTypeDto): Promise<LeaveType> {
   try {
-    const response = await apiRequest<LeaveType>("/api/leave-types", {
-        method: "POST",
-        body: JSON.stringify(data)
+    const response = await apiRequest<LeaveType>("/api/leave-requests", {
+      method: "POST",
+      body: JSON.stringify(data)
     })
     return response
   } catch (error) {
-    console.error("Error creating leave type:", error)
+    console.error("Error creating leave request:", error)
     throw error
   }
 }
 
 /**
- * Updates an existing leave type
+ * Updates an existing leave request
  */
-export async function updateLeaveType(id: string, data: UpdateLeaveTypeDto): Promise<LeaveType> {
+export async function updateLeaveType(id: string, data: FormData | UpdateLeaveTypeDto): Promise<LeaveType> {
   try {
-    const response = await apiRequest<LeaveType>(`/api/leave-types/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify(data)
+    const response = await apiRequest<LeaveType>(`/api/leave-requests/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data)
     })
     return response
   } catch (error) {
-    console.error(`Error updating leave type with ID ${id}:`, error)
+    console.error(`Error updating leave request with ID ${id}:`, error)
     throw error
   }
 }

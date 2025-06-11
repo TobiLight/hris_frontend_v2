@@ -13,7 +13,7 @@ export function PayrollStats() {
           </div>
         </CardHeader>
         <CardContent className="p-4">
-          <div className="text-2xl font-bold">$427,800</div>
+          <div className="text-2xl font-bold">N0</div>
           <p className="text-xs text-muted-foreground">For 124 employees</p>
         </CardContent>
       </Card>
@@ -27,7 +27,7 @@ export function PayrollStats() {
           </div>
         </CardHeader>
         <CardContent className="p-4">
-          <div className="text-2xl font-bold">$3,450</div>
+          <div className="text-2xl font-bold">N0</div>
           <p className="text-xs text-muted-foreground">Monthly average</p>
         </CardContent>
       </Card>
@@ -41,7 +41,7 @@ export function PayrollStats() {
           </div>
         </CardHeader>
         <CardContent className="p-4">
-          <div className="text-2xl font-bold">May 30, 2024</div>
+          <div className="text-2xl font-bold">June 27, 2025</div>
           <p className="text-xs text-muted-foreground">5 days remaining</p>
         </CardContent>
       </Card>
@@ -55,7 +55,7 @@ export function PayrollStats() {
           </div>
         </CardHeader>
         <CardContent className="p-4">
-          <div className="text-2xl font-bold">124</div>
+          <div className="text-2xl font-bold">0</div>
           <p className="text-xs text-muted-foreground">All employees processed</p>
         </CardContent>
       </Card>

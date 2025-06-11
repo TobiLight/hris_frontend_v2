@@ -22,12 +22,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreVertical, Edit, Trash2, Users, Eye } from "lucide-react";
+import { MoreVertical, Edit, Trash2, Users, Eye, UserX } from "lucide-react";
 import Link from "next/link";
 import { Department } from "@/lib/api/department-service";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-export function DepartmentList({ departments }: { departments: Department[] }) {
-   return (
+interface DepartmentListProps {
+  departments: Department[];
+  handleDeleteDepartment: (department: Department) => void
+}
+
+
+export function DepartmentList({ departments, handleDeleteDepartment }: DepartmentListProps) {
+  return (
     <Card className="border-none shadow-md">
       <CardHeader className="border-b bg-gray-50 p-4 pb-3">
         <CardTitle>Department List</CardTitle>
@@ -93,10 +100,37 @@ export function DepartmentList({ departments }: { departments: Department[] }) {
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600">
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem
+                                onSelect={(e) => e.preventDefault()}
+                                className="text-red-600"
+                              >
+                                <UserX className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Delete Employee
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete this employee?
+                                  This action is irreversible.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteDepartment(department)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

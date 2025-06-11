@@ -1,9 +1,25 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import {jwtDecode} from "jwt-decode";
+
+function getTokenExpiry(token: string): number | null {
+  try {
+    const decoded = jwtDecode(token);
+    return decoded.exp as number * 1000; // convert to ms
+  } catch (e) {
+    return null;
+  }
+}
+
+function isTokenExpired(token: string): boolean {
+  const expiry = getTokenExpiry(token);
+  if (!expiry) return true;
+  return Date.now() >= expiry;
+}
 
 export function middleware(request: NextRequest) {
-  // For demonstration purposes only - in a real app, you would verify the token
   const isAuthenticated = request.cookies.has("access_token");
+  const token = request.cookies.get("access_token");
 
   // Get the pathname of the request
   const pathname = request.nextUrl.pathname;

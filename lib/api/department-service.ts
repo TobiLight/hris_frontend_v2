@@ -227,9 +227,9 @@ export async function updateDepartment(
 /**
  * Delete a department
  */
-export async function deleteDepartment(id: string): Promise<void> {
+export async function deleteDepartment(id: string): Promise<boolean> {
   try {
-    await apiRequest(`/departments/${id}`, {
+    return await apiRequest(`/departments/${id}`, {
       method: "DELETE",
     });
   } catch (error) {

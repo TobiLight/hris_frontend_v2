@@ -9,17 +9,21 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import {
+  deleteDepartment,
   fetchDepartments,
   type Department,
 } from "@/lib/api/department-service";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/use-toast";
+import { useRouter } from "next/navigation";
 
 export default function DepartmentsPage() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter()
 
   const loadDepartments = async () => {
     try {
@@ -34,6 +38,43 @@ export default function DepartmentsPage() {
       setLoading(false);
     }
   };
+
+   const handleDeleteDepartment = (department: Department) => {
+        async function deleteUser() {
+          try {
+            let departmentData = await deleteDepartment(department.id as string);
+            if (departmentData) {
+              toast({
+                title: "Department deleted",
+                description: `${department.name} data has been deleted successfully`,
+              });
+              router.refresh();
+              return;
+            }
+            toast({
+              title: "Can't perform action",
+              description: `Department has been deleted or does not exist`,
+              variant: "destructive",
+            });
+          } catch (error) {
+            console.error("Error updating department:", error);
+            toast({
+              title: "Error updating Department data",
+              description:
+                error instanceof Error
+                  ? error.message
+                  : "An unknown error occurred. Please try again.",
+              variant: "destructive",
+            });
+          } finally {
+              router.refresh();
+            router.push("/admin/departments");
+            // window.location.replace("/admin/employees")
+          }
+        }
+        deleteUser();
+      };
+    
 
   useEffect(() => {
     loadDepartments();
@@ -99,7 +140,7 @@ export default function DepartmentsPage() {
                 )}
                 allocation={0}
               />
-              <DepartmentList departments={departments} />
+              <DepartmentList departments={departments} handleDeleteDepartment={handleDeleteDepartment} />
               <DepartmentStructure departments={departments} isLoading={loading} />
             </>
           )}

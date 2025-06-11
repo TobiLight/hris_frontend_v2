@@ -18,6 +18,7 @@ import { MoreVertical, Search, Edit, Trash2, Eye, Mail } from "lucide-react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { fetchDepartmentById, type Department } from "@/lib/api/department-service"
+import { formatDate } from "@/lib/utils"
 
 // Sample department data
 
@@ -99,40 +100,40 @@ export function DepartmentEmployees({ id }: { id: string }) {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredEmployees.map((employee: any) => (
+                filteredEmployees.map((employee) => (
                   <TableRow key={employee.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar>
-                          <AvatarImage src={employee.avatar || "/placeholder.svg"} alt={employee.name} />
+                          <AvatarImage src={employee.image_uri || "/placeholder.svg"} alt={employee.first_name + "" + employee.last_name} />
                           <AvatarFallback>
-                            {employee.name
+                            {employee.first_name
                               .split(" ")
                               .map((n: string) => n[0])
                               .join("")}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{employee.name}</p>
+                          <p className="font-medium">{employee.first_name} {employee.last_name}</p>
                           <p className="text-xs text-gray-500">{employee.email}</p>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>{employee.position}</TableCell>
+                    <TableCell>{employee.role.name}</TableCell>
                     <TableCell>
                       <Badge
                         className={
-                          employee.status === "Active"
+                          employee.is_active
                             ? "bg-green-100 text-green-800 hover:bg-green-100"
-                            : employee.status === "On Leave"
+                            : employee.is_active
                               ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
                               : "bg-gray-100 text-gray-800 hover:bg-gray-100"
                         }
                       >
-                        {employee.status}
+                        Active
                       </Badge>
                     </TableCell>
-                    <TableCell>{new Date(employee.joinDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{formatDate(employee.employment_date)}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

@@ -23,12 +23,12 @@ export default function DepartmentEmployeesPage({ params }: { params: { id: stri
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">Department Employees</h1>
             <p className="text-gray-500">View and manage employees in this department</p>
           </div>
-          <Button asChild size="sm">
-            <Link href="/admin/employees-add">
+          {/* <Button asChild size="sm">
+            <Link href="/admin/department/">
               <UserPlus className="mr-2 h-4 w-4" />
               Add Employee
             </Link>
-          </Button>
+          </Button> */}
         </div>
 
         <DepartmentEmployees id={params.id} />

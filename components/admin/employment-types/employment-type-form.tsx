@@ -1,35 +1,48 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { Loader2 } from "lucide-react"
-import { toast } from "sonner"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Loader2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
-import { fetchEmploymentTypeById, createEmploymentType, updateEmploymentType } from "@/lib/api/employment-type-service"
+import {
+  fetchEmploymentTypeById,
+  createEmploymentType,
+  updateEmploymentType,
+} from "@/lib/api/employment-type-service";
+import { toast } from "@/hooks/use-toast";
 
 // Form schema
 const employmentTypeFormSchema = z.object({
   name: z.string().min(2, "Employment type name must be at least 2 characters"),
-})
+});
 
-type EmploymentTypeFormValues = z.infer<typeof employmentTypeFormSchema>
+type EmploymentTypeFormValues = z.infer<typeof employmentTypeFormSchema>;
 
 interface EmploymentTypeFormProps {
-  employmentTypeId?: string
+  employmentTypeId?: string;
 }
 
-export function EmploymentTypeForm({ employmentTypeId }: EmploymentTypeFormProps) {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
-  const [isFetching, setIsFetching] = useState(!!employmentTypeId)
+export function EmploymentTypeForm({
+  employmentTypeId,
+}: EmploymentTypeFormProps) {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(!!employmentTypeId);
 
   // Initialize form
   const form = useForm<EmploymentTypeFormValues>({
@@ -37,53 +50,70 @@ export function EmploymentTypeForm({ employmentTypeId }: EmploymentTypeFormProps
     defaultValues: {
       name: "",
     },
-  })
+  });
 
   // Fetch employment type data if editing
   useEffect(() => {
     const fetchEmploymentType = async () => {
-      if (!employmentTypeId) return
+      if (!employmentTypeId) return;
 
       try {
-        setIsFetching(true)
-        const employmentType = await fetchEmploymentTypeById(employmentTypeId)
+        setIsFetching(true);
+        const employmentType = await fetchEmploymentTypeById(employmentTypeId);
         form.reset({
           name: employmentType.name,
-        })
+        });
       } catch (error) {
-        console.error("Error fetching employment type:", error)
-        toast.error("Failed to load employment type data")
+        console.error("Error fetching employment type:", error);
+        toast({
+          title: "Failed to load employment type data",
+          description:
+            "An error has occured while loading employment type data",
+        });
       } finally {
-        setIsFetching(false)
+        setIsFetching(false);
       }
-    }
+    };
 
-    fetchEmploymentType()
-  }, [employmentTypeId, form])
+    fetchEmploymentType();
+  }, [employmentTypeId, form]);
 
   // Handle form submission
   const onSubmit = async (data: EmploymentTypeFormValues) => {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
 
       if (employmentTypeId) {
         // Update existing employment type
-        await updateEmploymentType(employmentTypeId, data)
-        toast.success("Employment type updated successfully")
+        let updateEmploymentTypeData = await updateEmploymentType(employmentTypeId, data);
+        toast({
+          title: "Employment type updated successfully",
+          description: `${data.name} has been updated successfully to ${updateEmploymentTypeData.name}`,
+        });
       } else {
         // Create new employment type
-        await createEmploymentType(data)
-        toast.success("Employment type created successfully")
+        let createEmploymentTypeData = await createEmploymentType(data);
+        toast({
+          title: "Employment type created successfully",
+          description: `You have successfully created employee type: ${createEmploymentTypeData.name}`,
+        });
       }
 
-      router.push("/admin/employment-types")
+      router.push("/admin/employment-types");
     } catch (error) {
-      console.error("Error saving employment type:", error)
-      toast.error(employmentTypeId ? "Failed to update employment type" : "Failed to create employment type")
+      console.error("Error saving employment type:", error);
+
+      toast({
+        title: "Error saving employment type",
+        description: employmentTypeId
+          ? "Failed to update employment type"
+          : "Failed to create employment type",
+        variant: "destructive"
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   if (isFetching) {
     return (
@@ -91,7 +121,7 @@ export function EmploymentTypeForm({ employmentTypeId }: EmploymentTypeFormProps
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <span className="ml-2">Loading employment type data...</span>
       </div>
-    )
+    );
   }
 
   return (
@@ -106,7 +136,10 @@ export function EmploymentTypeForm({ employmentTypeId }: EmploymentTypeFormProps
                 <FormItem>
                   <FormLabel>Employment Type Name*</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter employment type name" {...field} />
+                    <Input
+                      placeholder="Enter employment type name"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -139,5 +172,5 @@ export function EmploymentTypeForm({ employmentTypeId }: EmploymentTypeFormProps
         </Form>
       </CardContent>
     </Card>
-  )
+  );
 }

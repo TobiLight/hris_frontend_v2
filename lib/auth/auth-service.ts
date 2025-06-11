@@ -1,4 +1,8 @@
-import { setAccessToken, setCsrfToken, setUser } from "./storage";
+import {
+  setAccessToken,
+  setCsrfToken,
+  setUser,
+} from "./storage";
 
 // Types for authentication
 export interface User {
@@ -6,8 +10,8 @@ export interface User {
   email: string;
   first_name: string;
   last_name: string;
-  image_uri: string | null
-  role: {id: string, name: string};
+  image_uri: string | null;
+  role: { id: string; name: string };
 }
 
 export interface LoginResponse {

@@ -36,6 +36,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Loader2 } from "lucide-react";
+import { fetchEmployees } from "@/lib/api/employee-service";
 
 const departmentFormSchema = z.object({
   // Personal Information
@@ -51,6 +52,12 @@ export function DepartmentEditForm({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [department, setDepartment] = useState<Department | undefined>();
+  const [managers, setManagers] = useState<
+    { id?: string; name: string; job_title: string }[]
+  >([]);
+  const [isLoadingManagers, setIsLoadingManagers] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   // Initialize form
   const form = useForm<DepartmentFormValues>({
     resolver: zodResolver(departmentFormSchema),
@@ -61,8 +68,50 @@ export function DepartmentEditForm({ id }: { id: string }) {
     },
   });
 
+  // Load managers (employees who can be team leads)
   useEffect(() => {
-    // Simulate API call to fetch department data
+    const loadManagers = async () => {
+      try {
+        setIsLoadingManagers(true);
+        setError(null);
+
+        // Fetch all employees
+        const employees = await fetchEmployees();
+
+        // Filter employees to only include those with the department_lead role
+        const departmentLeads = employees.filter(
+          (employee) =>
+            employee.role.name.toLowerCase() === "department_lead" ||
+            employee.role.name.toLowerCase() === "admin" ||
+            employee.role.name.toLowerCase() === "manager"
+        );
+
+        // If no department leads are found, use all employees as a fallback
+        const managersToUse =
+          departmentLeads.length > 0 ? departmentLeads : employees;
+
+        // Transform employees to manager format
+        const managersData = managersToUse.map((emp) => ({
+          id: emp.id,
+          name: `${emp.first_name} ${emp.last_name}`,
+          job_title: emp.job_title || "Employee",
+        }));
+
+        setManagers(managersData);
+      } catch (err) {
+        console.error("Failed to load managers:", err);
+        setError(
+          "Failed to load managers. Please refresh the page and try again."
+        );
+      } finally {
+        setIsLoadingManagers(false);
+      }
+    };
+
+    loadManagers();
+  }, []);
+
+  useEffect(() => {
     const fetchDepartment = async () => {
       setLoading(true);
 
@@ -77,6 +126,11 @@ export function DepartmentEditForm({ id }: { id: string }) {
         });
       } catch (error) {
         console.error("Error fetching department data");
+        toast({
+          title: "Error fetching department data",
+          description: "An error occured while fetching department",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
@@ -195,17 +249,20 @@ export function DepartmentEditForm({ id }: { id: string }) {
                                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                                   Loading...
                                 </div>
-                              ) : department &&
-                                department?.team_members.length > 0 ? (
-                                department?.team_members.map((manager) => (
+                              ) : managers.length > 0 ? (
+                                managers.map((manager) => (
                                   <SelectItem
                                     key={manager.id}
                                     value={manager.id as string}
                                   >
-                                    {manager.first_name} {manager.last_name} -{" "}
+                                    {manager.name} -{" "}
                                     {manager.job_title}
                                   </SelectItem>
                                 ))
+                              ) : error ? (
+                                <div className="p-2 text-center text-sm text-red-500">
+                                  {error}
+                                </div>
                               ) : (
                                 <div className="p-2 text-center text-sm text-gray-500">
                                   No managers available

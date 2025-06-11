@@ -1,12 +1,19 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { MoreHorizontal, Edit, Eye } from "lucide-react"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { MoreHorizontal, Edit, Eye } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,44 +21,61 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import Link from "next/link"
-import { attendanceService, type AttendanceRecord } from "@/lib/api/attendance-service"
+} from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Link from "next/link";
+import {
+  attendanceService,
+  type AttendanceRecord,
+} from "@/lib/api/attendance-service";
+import { useRouter } from "next/navigation";
 
 export function AttendanceList() {
-  const [records, setRecords] = useState<AttendanceRecord[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter()
+
+  const fetchAttendance = async () => {
+      try {
+        setError(null)
+        setLoading(true);
+        const data = await attendanceService.fetchAllAttendance();
+        setRecords(data);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to fetch attendance records"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
 
   useEffect(() => {
-    const fetchAttendance = async () => {
-      try {
-        setLoading(true)
-        const data = await attendanceService.fetchAllAttendance()
-        setRecords(data)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch attendance records")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchAttendance()
-  }, [])
+    fetchAttendance();
+  }, []);
 
   const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase()
-  }
+    return `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase();
+  };
 
-  const today = new Date().toISOString().split("T")[0]
+  const today = new Date().toISOString().split("T")[0];
 
-  const todayRecords = records.filter((record) => record.clock_in_date === today)
-  const presentToday = todayRecords.filter((record) => record.status === "ACCURATE" || record.status === "LATE")
-  const lateArrivals = todayRecords.filter((record) => record.clock_in_status === "LATE")
+  const todayRecords = records.filter(
+    (record) => record.clock_in_date === today
+  );
+  const presentToday = todayRecords.filter(
+    (record) => record.status === "ACCURATE" || record.status === "LATE"
+  );
+  const lateArrivals = todayRecords.filter(
+    (record) => record.clock_in_status === "LATE"
+  );
   const onLeave = todayRecords.filter(
-    (record) => record.status === "ABSENT", // Adjust based on your leave logic
-  )
+    (record) => record.status === "ABSENT" // Adjust based on your leave logic
+  );
 
   const renderAttendanceTable = (data: AttendanceRecord[]) => {
     if (loading) {
@@ -63,11 +87,15 @@ export function AttendanceList() {
             </div>
           ))}
         </div>
-      )
+      );
     }
 
     if (data.length === 0) {
-      return <div className="text-center py-8 text-gray-500">No attendance records found for this category.</div>
+      return (
+        <div className="text-center py-8 text-gray-500">
+          No attendance records found for this category.
+        </div>
+      );
     }
 
     return (
@@ -89,32 +117,48 @@ export function AttendanceList() {
               <TableCell>
                 <div className="flex items-center gap-3">
                   <Avatar>
-                    <AvatarImage src="/placeholder.svg" alt={`${record.user?.first_name} ${record.user?.last_name}`} />
+                    <AvatarImage
+                      src="/placeholder.svg"
+                      alt={`${record.user?.first_name} ${record.user?.last_name}`}
+                    />
                     <AvatarFallback className="bg-teal-100 text-teal-800">
-                      {getInitials(record.user?.first_name || "", record.user?.last_name || "")}
+                      {getInitials(
+                        record.user?.first_name || "",
+                        record.user?.last_name || ""
+                      )}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <div className="font-medium">
                       {record.user?.first_name} {record.user?.last_name}
                     </div>
-                    <div className="text-sm text-gray-500">{record.user?.department?.name || "No Department"}</div>
+                    <div className="text-sm text-gray-500">
+                      {record.user?.department?.name || "No Department"}
+                    </div>
                   </div>
                 </div>
               </TableCell>
-              <TableCell>{attendanceService.formatDate(record.clock_in_date)}</TableCell>
               <TableCell>
-                <Badge variant="outline" className={attendanceService.getStatusColor(record.status)}>
+                {attendanceService.formatDate(record.clock_in_date)}
+              </TableCell>
+              <TableCell>
+                <Badge
+                  variant="outline"
+                  className={attendanceService.getStatusColor(record.status)}
+                >
                   {record.status}
                 </Badge>
               </TableCell>
               <TableCell>
                 <div className="space-y-1">
-                  <div>{attendanceService.formatTime(record.clock_in_time)}</div>
+                  <div>
+                    {attendanceService.formatTime(record.clock_in_time)}
+                  </div>
                   <Badge
                     variant="outline"
-                    className={attendanceService.getClockStatusColor(record.clock_in_status)}
-                    size="sm"
+                    className={attendanceService.getClockStatusColor(
+                      record.clock_in_status
+                    )}
                   >
                     {record.clock_in_status}
                   </Badge>
@@ -123,11 +167,14 @@ export function AttendanceList() {
               <TableCell>
                 {record.clock_out_time ? (
                   <div className="space-y-1">
-                    <div>{attendanceService.formatTime(record.clock_out_time)}</div>
+                    <div>
+                      {attendanceService.formatTime(record.clock_out_time)}
+                    </div>
                     <Badge
                       variant="outline"
-                      className={attendanceService.getClockStatusColor(record.clock_out_status)}
-                      size="sm"
+                      className={attendanceService.getClockStatusColor(
+                        record.clock_out_status
+                      )}
                     >
                       {record.clock_out_status}
                     </Badge>
@@ -161,7 +208,9 @@ export function AttendanceList() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href={`/admin/employees/${record.user_id}/view`}>View Employee Profile</Link>
+                      <Link href={`/admin/employees/${record.user_id}/view`}>
+                        View Employee Profile
+                      </Link>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -170,17 +219,27 @@ export function AttendanceList() {
           ))}
         </TableBody>
       </Table>
-    )
-  }
+    );
+  };
 
   if (error) {
     return (
       <Card className="border-red-200 bg-red-50">
-        <CardContent className="p-6">
-          <p className="text-red-600">Error loading attendance records: {error}</p>
+        <CardContent className="p-6 flex flex-row items-center space-x-3">
+          <p className="text-red-600">
+            Error loading attendance records: {error}
+          </p>
+          <Button
+            variant="outline"
+            type="button"
+            className="bg-teal-600 hover:bg-teal-700 text-white hover:text-white"
+            onClick={fetchAttendance}
+          >
+            Retry
+          </Button>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -191,10 +250,16 @@ export function AttendanceList() {
       <CardContent>
         <Tabs defaultValue="present" className="w-full">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="present">Present Today ({presentToday.length})</TabsTrigger>
-            <TabsTrigger value="late">Late Arrivals ({lateArrivals.length})</TabsTrigger>
+            <TabsTrigger value="present">
+              Present Today ({presentToday.length})
+            </TabsTrigger>
+            <TabsTrigger value="late">
+              Late Arrivals ({lateArrivals.length})
+            </TabsTrigger>
             <TabsTrigger value="leave">On Leave ({onLeave.length})</TabsTrigger>
-            <TabsTrigger value="all">All Records ({records.length})</TabsTrigger>
+            <TabsTrigger value="all">
+              All Records ({records.length})
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="present" className="mt-4">
@@ -216,10 +281,12 @@ export function AttendanceList() {
 
         <div className="mt-6 flex justify-center">
           <Button asChild className="bg-teal-600 hover:bg-teal-700">
-            <Link href="/admin/attendance/records">View All Attendance Records</Link>
+            <Link href="/admin/attendance/records">
+              View All Attendance Records
+            </Link>
           </Button>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

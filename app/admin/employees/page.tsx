@@ -62,7 +62,7 @@ export default function EmployeesPage() {
           }
           toast({
             title: "Can't perform action",
-            description: `User has been deleted or does not exist`,
+            description: `Employee has been deleted or does not exist`,
             variant: "destructive",
           });
         } catch (error) {

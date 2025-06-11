@@ -40,7 +40,7 @@ class AttendanceService {
    */
   async fetchAllAttendance(): Promise<AttendanceRecord[]> {
     try {
-      return await apiRequest<AttendanceRecord[]>("/api/attendance/all")
+      return await apiRequest<AttendanceRecord[]>("/admin/attendance/all")
     } catch (error) {
       console.error("Error fetching attendance records:", error)
       throw error
@@ -67,7 +67,7 @@ class AttendanceService {
         (record) => record.status === "ABSENT", // This might need adjustment based on your leave logic
       ).length
 
-      const totalEmployees = 100 // This should come from employee count API
+      const totalEmployees = 0 // This should come from employee count API
       const absent = totalEmployees - presentToday - onLeave
 
       return {

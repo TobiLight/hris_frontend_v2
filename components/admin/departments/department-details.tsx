@@ -86,7 +86,7 @@ export function DepartmentDetails({ id }: { id: string }) {
             <CardTitle className="text-xl font-bold flex items-center">
               <Building2 className="mr-2 h-5 w-5 text-teal-600" />
               {department.name}
-              <Badge className="ml-3 bg-teal-600">XXX</Badge>
+              {/* <Badge className="ml-3 bg-teal-600">IT</Badge> */}
             </CardTitle>
           </CardHeader>
           <CardContent>

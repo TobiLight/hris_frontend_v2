@@ -88,7 +88,7 @@ export default function AnnouncementsPage() {
                 >
                   <Link href="/admin/announcements/add">
                     <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Department
+                    Add Announcement
                   </Link>
                 </Button>
               </div>

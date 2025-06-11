@@ -25,7 +25,7 @@ export async function fetchEmploymentTypes(): Promise<EmploymentType[]> {
  */
 export async function fetchEmploymentTypeById(id: string): Promise<EmploymentType> {
   try {
-    const employmentType = await apiRequest<EmploymentType>(`/employment-types/${id}`)
+    const employmentType = await apiRequest<EmploymentType>(`/admin/employment-type/${id}`)
     return employmentType
   } catch (error) {
     console.error(`Error fetching employment type with ID ${id}:`, error)
@@ -38,9 +38,9 @@ export async function fetchEmploymentTypeById(id: string): Promise<EmploymentTyp
  */
 export async function createEmploymentType(data: Partial<EmploymentType>): Promise<EmploymentType> {
   try {
-    const employmentType = await apiRequest<EmploymentType>("/employment-types", {
+    const employmentType = await apiRequest<EmploymentType>("/admin/employment-type/create", {
       method: "POST",
-      body: data,
+      body: JSON.stringify(data),
     })
     return employmentType
   } catch (error) {
@@ -54,9 +54,9 @@ export async function createEmploymentType(data: Partial<EmploymentType>): Promi
  */
 export async function updateEmploymentType(id: string, data: Partial<EmploymentType>): Promise<EmploymentType> {
   try {
-    const employmentType = await apiRequest<EmploymentType>(`/employment-types/${id}`, {
-      method: "PUT",
-      body: data,
+    const employmentType = await apiRequest<EmploymentType>(`/admin/employment-type/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
     })
     return employmentType
   } catch (error) {
@@ -68,9 +68,9 @@ export async function updateEmploymentType(id: string, data: Partial<EmploymentT
 /**
  * Delete an employment type
  */
-export async function deleteEmploymentType(id: string): Promise<void> {
+export async function deleteEmploymentType(id: string): Promise<boolean> {
   try {
-    await apiRequest(`/employment-types/${id}`, {
+    return await apiRequest<boolean>(`/admin/employment-types/${id}`, {
       method: "DELETE",
     })
   } catch (error) {
